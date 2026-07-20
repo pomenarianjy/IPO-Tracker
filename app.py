@@ -77,17 +77,14 @@ if selected_stock_str != "Overview Mode":
     # Calculate performance metrics
     latest_price = simulated_prices[-1]
     perf_pct = ((latest_price - base_price) / base_price) * 100
-    market_cap = latest_price * 2010000000 # Mock shares outstanding calculation roughly around 2B shares
+    market_cap_billions = (latest_price * 2010000000) / 1e9 # Calculation in Billions
     
-    # Format Market Cap cleanly into billions to prevent any truncation issues
-    market_cap_str = f"HKD {market_cap / 1e9:.2f} Billion"
-    
-    # Display Key Statistics Cards
+    # Display Key Statistics Cards with explicit Billion unit label included in the title
     m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("Latest Price", f"HKD {latest_price:.2f}", f"{perf_pct:+.2f}%")
     m2.metric("Offering Price", stock_info["Offering Price"])
     m3.metric("Currency", "HKD")
-    m4.metric("Est. Market Cap", market_cap_str)
+    m4.metric("Est. Market Cap (Billion)", f"HKD {market_cap_billions:.2f}")
     m5.metric("Exchange Board", stock_info["Exchange"])
     
     st.markdown("### Day-to-Day Price Trend Since Listing")
