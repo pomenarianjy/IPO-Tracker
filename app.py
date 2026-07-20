@@ -6,7 +6,7 @@ from ipo_data2 import load_verified_hk_ipos_part2
 
 # Page Configuration
 st.set_page_config(
-    page_title="HKEX 2026 IPO Dashboard",
+    page_title="Jasmine's HKEX 2026 IPO Dashboard",
     page_icon="📈",
     layout="wide"
 )
@@ -24,7 +24,7 @@ def get_combined_ipo_data():
 df_ipos = get_combined_ipo_data()
 
 # App Header
-st.title("🇭🇰 HKEX 2026 IPO Market Dashboard")
+st.title("🇭🇰 Jasmine's HKEX 2026 IPO Market Dashboard")
 st.markdown("Comprehensive tracking of newly listed companies on the Hong Kong Exchanges and Clearing (HKEX) for 2026.")
 
 # Sidebar Filters & Stock Selector
@@ -79,12 +79,15 @@ if selected_stock_str != "Overview Mode":
     perf_pct = ((latest_price - base_price) / base_price) * 100
     market_cap = latest_price * 2010000000 # Mock shares outstanding calculation roughly around 2B shares
     
+    # Format Market Cap cleanly with full digits and readable string
+    market_cap_str = f"HKD {market_cap:,.0f}"
+    
     # Display Key Statistics Cards
     m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("Latest Price", f"HKD {latest_price:.2f}", f"{perf_pct:+.2f}%")
     m2.metric("Offering Price", stock_info["Offering Price"])
     m3.metric("Currency", "HKD")
-    m4.metric("Est. Market Cap", f"HKD {market_cap/1e9:.2f}B")
+    m4.metric("Est. Market Cap", market_cap_str)
     m5.metric("Exchange Board", stock_info["Exchange"])
     
     st.markdown("### Day-to-Day Price Trend Since Listing")
