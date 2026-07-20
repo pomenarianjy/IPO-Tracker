@@ -1,337 +1,356 @@
-import datetime
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import datetime
 
-# 1. Page Configuration & Apple-Aesthetic CSS
+# --- PAGE CONFIGURATION & APPLE-INSPIRED DESIGN SYSTEM ---
 st.set_page_config(
-    page_title="Jasmine’s 2026 Greater China IPO Tracker",
-    page_icon="",
+    page_title="Jasmine’s Greater China IPO Tracker",
+    page_icon="📈",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed"
 )
 
-APPLE_CSS = """
+# Custom Apple Product Page Aesthetic Styling
+st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
     html, body, [class*="css"] {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-        background-color: #FBFBFD;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #F5F5F7;
         color: #1D1D1F;
     }
 
-    .stApp {
-        background-color: #FBFBFD;
+    /* Hide default Streamlit elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    .main {
+        padding: 2rem 3rem;
     }
 
+    /* Apple-style Glass / Card Container */
     .apple-card {
         background: #FFFFFF;
-        border: 1px solid rgba(0, 0, 0, 0.04);
         border-radius: 18px;
         padding: 24px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.04);
         margin-bottom: 20px;
-    }
-
-    .stat-badge {
-        background: #FFFFFF;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 14px;
-        padding: 16px 20px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02);
-        text-align: center;
-    }
-
-    h1, h2, h3 {
-        font-weight: 600;
-        letter-spacing: -0.015em;
-        color: #1D1D1F;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     
+    .apple-card:hover {
+        box-shadow: 0 6px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Typography Hierarchy */
     .hero-title {
-        font-size: 38px;
+        font-size: 42px;
         font-weight: 700;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.015em;
         color: #1D1D1F;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
     }
 
     .hero-subtitle {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 400;
         color: #86868B;
-        margin-bottom: 24px;
+        margin-bottom: 32px;
     }
 
+    .section-header {
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: #1D1D1F;
+        margin-top: 24px;
+        margin-bottom: 16px;
+    }
+
+    /* Metrics & Badges */
     .metric-value {
-        font-size: 26px;
+        font-size: 28px;
         font-weight: 600;
         color: #1D1D1F;
     }
-    .metric-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: #86868B;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
+    
+    .badge-hkex { background-color: #E8F2FF; color: #0066CC; padding: 4px 10px; border-radius: 6px; font-weight: 500; font-size: 12px; }
+    .badge-sse { background-color: #FFEAEA; color: #FF3B30; padding: 4px 10px; border-radius: 6px; font-weight: 500; font-size: 12px; }
+    .badge-szse { background-color: #FFF4E5; color: #FF9500; padding: 4px 10px; border-radius: 6px; font-weight: 500; font-size: 12px; }
 
-    [data-testid="stSidebar"] {
-        background-color: #F5F5F7 !important;
-        border-right: 1px solid rgba(0, 0, 0, 0.05);
-        min-width: 280px !important;
+    /* Custom Streamlit Input Overrides */
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        border: 1px solid #D2D2D7;
     }
 </style>
-"""
-st.markdown(APPLE_CSS, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-
-# 2. Comprehensive 2026 Universe Dataset (All 85 HKEX, 19 SSE, 16 SZSE Listings)
+# --- DATA UNIVERSE INITIALIZATION (YTD IPOs: HKEX ~85, SSE ~19, SZSE ~16) ---
 @st.cache_data
 def load_ipo_universe():
-    master_listings = []
-    
-    # --- Generate the 85 HKEX 2026 Listings ---
-    hkex_samples = [
-        ("02249.HK", "NEXCHIP SEMICONDUCTOR CORPORATION", "晶合集成", "2026-07-10", 32.30, 30.92, 2450.0, "Technology", "Semiconductors"),
-        ("06745.HK", "BEFAR GROUP CO., LTD", "滨化集团", "2026-07-10", 3.48, 3.04, 880.0, "Materials", "Chemicals"),
-        ("02475.HK", "LUXSHARE PRECISION INDUSTRY CO., LTD.", "立訊精密", "2026-07-09", 63.28, 60.00, 24150.0, "Consumer", "Consumer Electronics"),
-        ("02797.HK", "JIANGXI QIYUNSHAN FOOD CO., LTD.", "江西齐云山食品", "2026-07-09", 8.00, 29.40, 620.0, "Consumer", "Food & Beverages"),
-        ("03752.HK", "ROKAE (SHANDONG) ROBOTICS GROUP INC.", "珞石机器人", "2026-07-09", 38.00, 48.88, 1250.0, "Technology", "Robotics & AI"),
-        ("01770.HK", "DKE HOLDING COMPANY LIMITED", "东科控股", "2026-07-09", 78.64, 77.70, 1540.0, "Healthcare", "Biotech"),
-        ("01377.HK", "GUANGDONG DTECH TECHNOLOGY CO., LTD.", "迪阿科技", "2026-07-09", 380.00, 417.80, 3400.0, "Technology", "Consumer Tech"),
-        ("00537.HK", "RIGOL TECHNOLOGIES CO., LTD.", "普源精电", "2026-07-09", 45.98, 25.60, 910.0, "Technology", "Electronic Instruments"),
-        ("06951.HK", "CHAOZHOU THREE-CIRCLE GROUP", "三环集团", "2026-07-09", 100.30, 98.00, 4100.0, "Industrial", "Electronic Components"),
-        ("06880.HK", "MOMENTA GLOBAL LIMITED", "初速度", "2026-07-08", 295.60, 288.00, 3100.0, "Technology", "Autonomous Driving"),
-        ("07656.HK", "RECONOVA TECHNOLOGIES CO., LTD.", "瑞识科技", "2026-07-08", 21.66, 26.98, 850.0, "Technology", "AI Vision"),
-        ("07687.HK", "EACON GROUP CO., LTD", "易控智驾", "2026-07-08", 87.92, 88.25, 1120.0, "Technology", "Autonomous Mining"),
-        ("08090.HK", "SHANDONG BAOGAI NEW MATERIALS", "宝盖新材料", "2026-07-08", 6.22, 6.00, 520.0, "Materials", "Advanced Materials"),
-        ("09971.HK", "BASIC SEMICONDUCTOR CO., LTD.", "基本半导体", "2026-07-08", 31.62, 39.50, 1420.0, "Technology", "Power Semiconductors"),
-        ("02667.HK", "BEIJING TONG REN TANG HEALTHCARE", "同仁堂医疗", "2026-07-07", 5.50, 2.88, 930.0, "Healthcare", "Traditional Healthcare"),
-        ("00668.HK", "ANKER INNOVATIONS TECHNOLOGY CO.", "安克创新", "2026-07-02", 99.32, 100.10, 2800.0, "Technology", "Smart Hardware"),
-        ("06915.HK", "JIANGXI INSTITUTE OF BIOLOGICAL PRODUCTS", "江西生物制品", "2026-06-30", 11.20, 6.80, 750.0, "Healthcare", "Biopharmaceuticals"),
-        ("06715.HK", "HANGZHOU QIANDAOHU XUNLONG SCI-TECH", "千岛湖鲟龙科技", "2026-06-30", 75.50, 73.50, 640.0, "Consumer", "Agri-Tech"),
-        ("03952.HK", "ZHEJIANG LAIFUAL DRIVE CO., LTD.", "来福谐动", "2026-06-30", 85.50, 78.05, 990.0, "Industrial", "Precision Drives"),
-        ("02697.HK", "GUANGDONG TRUE HEALTH MEDICAL", "真健康医疗", "2026-06-30", 126.20, 723.00, 1890.0, "Healthcare", "Medical Devices"),
-    ]
-    
-    # Fill out the rest of the 85 HKEX listings programmatically to match exact official count
-    for i in range(1, 66):
-        ticker_str = f"{2000 + i:05d}.HK"
-        hkex_samples.append((
-            ticker_str, f"HKEX ENTERPRISE ISSUANCE {i}", f"香港港股企业 {i}",
-            "2026-03-15", 25.00, 27.50, 1200.0, "Diversified", "General Listing"
-        ))
-
-    for item in hkex_samples:
-        master_listings.append({
-            "ticker": item[0], "eng": item[1], "chi": item[2], "exchange": "HKEX",
-            "date": item[3], "ipo_price": item[4], "current_override": item[5],
-            "proceeds_m": item[6], "industry": item[7], "sub": item[8]
-        })
-
-    # --- Generate the 19 SSE 2026 Listings ---
-    sse_samples = [
-        ("688701.SH", "SUZHOU NOVATECH AI CORP.", "诺瓦星云", "2026-05-18", 112.50, 142.20, 2100.0, "Technology", "AI Display"),
-        ("688722.SH", "NUBIA QUANTUM TECH", "本源量子", "2026-04-12", 46.80, 68.50, 1650.0, "Technology", "Quantum Computing"),
-        ("603215.SH", "ZHEJIANG TITANIC NEW ENERGY", "泰坦新能源", "2026-03-25", 18.20, 22.40, 1200.0, "New Energy", "Battery Materials"),
-        ("688788.SH", "SHANGHAI AEROSPACE PROPULSION", "航天动力科", "2026-02-14", 34.60, 45.10, 2890.0, "Industrials", "Commercial Aerospace"),
-    ]
-    for i in range(1, 16):
-        sse_samples.append((
-            f"608{i:03d}.SH", f"SSE SHANGHAI ENTERPRISE {i}", f"沪市企业 {i}",
-            "2026-04-10", 20.00, 22.00, 1000.0, "Industrials", "Main Board Listing"
-        ))
-    for item in sse_samples:
-        master_listings.append({
-            "ticker": item[0], "eng": item[1], "chi": item[2], "exchange": "SSE",
-            "date": item[3], "ipo_price": item[4], "current_override": item[5],
-            "proceeds_m": item[6], "industry": item[7], "sub": item[8]
-        })
-
-    # --- Generate the 16 SZSE 2026 Listings ---
-    szse_samples = [
-        ("301550.SZ", "SHENZHEN DRAGONFLY OPTRONIC", "飞翔光电", "2026-06-15", 28.40, 35.60, 1150.0, "Technology", "Optical Elements"),
-        ("301588.SZ", "GUANGDONG AEROSPACE SMART TECH", "粤航智能", "2026-05-20", 41.20, 59.80, 1780.0, "Industrials", "Low-Altitude Economy"),
-        ("001389.SZ", "HUNAN LIANGLIN BIOTECH", "良林生物", "2026-04-08", 15.60, 18.20, 940.0, "Healthcare", "Life Sciences"),
-        ("301610.SZ", "WUXI SYNTHETIC GENOMICS", "华common基因", "2026-03-02", 52.10, 71.40, 2300.0, "Healthcare", "Synthetic Biology"),
-    ]
-    for i in range(1, 13):
-        szse_samples.append((
-            f"302{i:03d}.SZ", f"SZSE SHENZHEN ENTERPRISE {i}", f"深市企业 {i}",
-            "2026-03-20", 22.00, 24.00, 950.0, "Technology", "ChiNext Listing"
-        ))
-    for item in szse_samples:
-        master_listings.append({
-            "ticker": item[0], "eng": item[1], "chi": item[2], "exchange": "SZSE",
-            "date": item[3], "ipo_price": item[4], "current_override": item[5],
-            "proceeds_m": item[6], "industry": item[7], "sub": item[8]
-        })
-
-    processed_data = []
-    for item in master_listings:
-        listing_date = datetime.datetime.strptime(item["date"], "%Y-%m-%d").date()
-        days_active = max(1, (datetime.date.today() - listing_date).days)
+    data = [
+        # HKEX Universe (Sample representing the ~85 listings)
+        {"ticker": "02525.HK", "name_en": "Hesai Group", "name_cn": "禾赛科技", "exchange": "HKEX", "industry": "Technology", "subsector": "AI & LiDAR Hardware", "ipo_date": "2026-01-15", "issue_price": 28.50},
+        {"ticker": "02475.HK", "name_en": "Luxshare ICT", "name_cn": "立讯精密", "exchange": "HKEX", "industry": "Technology", "subsector": "Consumer Electronics", "ipo_date": "2026-02-10", "issue_price": 34.20},
+        {"ticker": "06880.HK", "name_en": "Momenta-W", "name_cn": "初速度", "exchange": "HKEX", "industry": "Automotive", "subsector": "Autonomous Driving", "ipo_date": "2026-03-05", "issue_price": 18.00},
+        {"ticker": "03752.HK", "name_en": "Rokae Robotics", "name_cn": "珞石机器人", "exchange": "HKEX", "industry": "Industrials", "subsector": "Robotics & Automation", "ipo_date": "2026-03-12", "issue_price": 22.40},
+        {"ticker": "02249.HK", "name_en": "Nexchip Semiconductor", "name_cn": "合肥晶合集成", "exchange": "HKEX", "industry": "Technology", "subsector": "Semiconductors", "ipo_date": "2026-04-18", "issue_price": 12.60},
+        {"ticker": "02667.HK", "name_en": "Tongrentang Care", "name_cn": "同仁堂健康", "exchange": "HKEX", "industry": "Healthcare", "subsector": "Traditional Biotech", "ipo_date": "2026-04-25", "issue_price": 15.80},
+        {"ticker": "07687.HK", "name_en": "Eacon Mining", "name_cn": "易控智驾", "exchange": "HKEX", "industry": "Automotive", "subsector": "Autonomous Mining", "ipo_date": "2026-05-10", "issue_price": 25.00},
+        {"ticker": "09971.HK", "name_en": "BasicSemi", "name_cn": "基本半导体", "exchange": "HKEX", "industry": "Technology", "subsector": "Power Semiconductors", "ipo_date": "2026-05-22", "issue_price": 40.00},
         
-        np.random.seed(sum(ord(c) for c in item["ticker"]))
-        dates = pd.date_range(end=datetime.date.today(), periods=min(days_active, 40), freq="B")
-        
-        simulated_returns = np.random.normal(0.001, 0.02, len(dates))
-        prices = item["ipo_price"] * np.cumprod(1 + simulated_returns)
-        prices[-1] = item["current_override"]
-        
-        total_return_pct = round(((item["current_override"] - item["ipo_price"]) / item["ipo_price"]) * 100, 2)
+        # SSE Universe (Main Board & STAR - Sample representing the ~19 listings)
+        {"ticker": "688797.SS", "name_en": "Chongqing Genori Technology", "name_cn": "臻宝科技", "exchange": "SSE", "industry": "Technology", "subsector": "Advanced Materials", "ipo_date": "2026-06-24", "issue_price": 45.00},
+        {"ticker": "688311.SS", "name_en": "Mingsheng Electronics", "name_cn": "盟升电子", "exchange": "SSE", "industry": "Telecommunications", "subsector": "Satellite Communications", "ipo_date": "2026-05-14", "issue_price": 38.50},
+        {"ticker": "688017.SS", "name_en": "Leader Harmonious Drive", "name_cn": "绿的谐波", "exchange": "SSE", "industry": "Industrials", "subsector": "Precision Reducers", "ipo_date": "2026-04-11", "issue_price": 62.00},
+        {"ticker": "603352.SS", "name_en": "Chongqing Zhixin Industrial", "name_cn": "智欣实业", "exchange": "SSE", "industry": "Industrials", "subsector": "Building Materials", "ipo_date": "2026-03-20", "issue_price": 14.20},
+        {"ticker": "688523.SS", "name_en": "Aerospace Hanyu", "name_cn": "航天环宇", "exchange": "SSE", "industry": "Aerospace & Defense", "subsector": "Aviation Equipment", "ipo_date": "2026-02-19", "issue_price": 21.30},
 
-        processed_data.append({
-            "Ticker": item["ticker"],
-            "English Name": item["eng"],
-            "Chinese Name": item["chi"],
-            "Exchange": item["exchange"],
-            "Listing Date": listing_date,
-            "Listing Year": 2026,
-            "Industry": item["industry"],
-            "Sub-Sector": item["sub"],
-            "IPO Price": item["ipo_price"],
-            "Current Price": item["current_override"],
-            "Total Return (%)": total_return_pct,
-            "Proceeds (M)": item["proceeds_m"],
-            "P/E Ratio": round(np.random.uniform(18, 50), 1),
-            "Price Series": prices,
-            "Dates": dates
-        })
+        # SZSE Universe (Main Board & ChiNext - Sample representing the ~16 listings)
+        {"ticker": "301500.SZ", "name_en": "HKC Corporation", "name_cn": "惠科股份", "exchange": "SZSE", "industry": "Technology", "subsector": "Display Panels", "ipo_date": "2026-06-05", "issue_price": 26.40},
+        {"ticker": "301400.SZ", "name_en": "Seeya Technology", "name_cn": "视涯科技", "exchange": "SZSE", "industry": "Technology", "subsector": "Micro-OLED Displays", "ipo_date": "2026-05-08", "issue_price": 31.00},
+        {"ticker": "001300.SZ", "name_en": "Zhongce Rubber Group", "name_cn": "中策橡胶", "exchange": "SZSE", "industry": "Consumer Cyclical", "subsector": "Automotive Tyres", "ipo_date": "2026-04-02", "issue_price": 48.00},
+        {"ticker": "301200.SZ", "name_en": "Tianyouwei Electronics", "name_cn": "天有为电子", "exchange": "SZSE", "industry": "Technology", "subsector": "Automotive Electronics", "ipo_date": "2026-03-15", "issue_price": 19.50}
+    ]
+    return pd.DataFrame(data)
 
-    return pd.DataFrame(processed_data)
+df_ipo = load_ipo_universe()
 
-df = load_ipo_universe()
+# --- HEADER SECTION ---
+st.markdown("<div class='hero-title'>Jasmine’s Greater China IPO Tracker</div>", unsafe_allow_html=True)
+st.markdown("<div class='hero-subtitle'>Live tracking, performance analytics, and institutional-grade screening for HKEX, SSE, and SZSE listings.</div>", unsafe_allow_html=True)
 
-# 3. SIDEBAR CONTROLS
-st.sidebar.markdown("### **2026 Scope Filters**")
-st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Full Exchange-Matched Dataset Active (HKEX: 85, SSE: 19, SZSE: 16).</p>', unsafe_allow_html=True)
-
-selected_exchanges = st.sidebar.multiselect(
-    "Exchanges",
-    options=df["Exchange"].unique().tolist(),
-    default=df["Exchange"].unique().tolist()
-)
-
-selected_industries = st.sidebar.multiselect(
-    "Industries",
-    options=df["Industry"].unique().tolist(),
-    default=df["Industry"].unique().tolist()
-)
-
-filtered_df = df[
-    df["Exchange"].isin(selected_exchanges) &
-    df["Industry"].isin(selected_industries)
-]
-
-# 4. Header Section with Complete Exchange Totals
-header_col1, header_col2 = st.columns([2.2, 2.8])
-
-with header_col1:
-    st.markdown('<p class="hero-title">2026 Greater China IPO Tracker</p>', unsafe_allow_html=True)
-    st.markdown('<p class="hero-subtitle">Comprehensive official database reflecting accurate exchange totals (HKEX: 85, SSE: 19, SZSE: 16).</p>', unsafe_allow_html=True)
-
-with header_col2:
-    stat_cols = st.columns(3)
-    with stat_cols[0]:
-        st.markdown("""
-            <div class="stat-badge">
-                <span class="metric-label">HKEX Total</span><br>
-                <span class="metric-value" style="color:#0066CC;">85</span>
-            </div>
-        """, unsafe_allow_html=True)
-    with stat_cols[1]:
-        st.markdown("""
-            <div class="stat-badge">
-                <span class="metric-label">SSE Total</span><br>
-                <span class="metric-value" style="color:#5856D6;">19</span>
-            </div>
-        """, unsafe_allow_html=True)
-    with stat_cols[2]:
-        st.markdown("""
-            <div class="stat-badge">
-                <span class="metric-label">SZSE Total</span><br>
-                <span class="metric-value" style="color:#AF52DE;">16</span>
-            </div>
-        """, unsafe_allow_html=True)
-
-st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-
-# 5. Main Content Layout: Split Panel
-col_left, col_right = st.columns([1.1, 1.4], gap="large")
-
-with col_left:
-    st.markdown("### **Full Issuance Directory**")
-    st.markdown(f'<p style="font-size:13px; color:#86868B;">Showing {len(filtered_df)} enterprises matching filter criteria.</p>', unsafe_allow_html=True)
+# --- FILTER CONTROLS BAR (Apple Minimalist Style) ---
+with st.container():
+    st.markdown("<div class='apple-card'>", unsafe_allow_html=True)
+    f_col1, f_col2, f_col3 = st.columns(3)
     
-    search_query = st.text_input("Quick Search", placeholder="Search ticker, corporate name or Chinese name...")
+    with f_col1:
+        exchanges = ["All Exchanges"] + list(df_ipo["exchange"].unique())
+        selected_exchange = st.selectbox("Exchange Venue", exchanges)
+        
+    with f_col2:
+        industries = ["All Industries"] + list(df_ipo["industry"].unique())
+        selected_industry = st.selectbox("Industry Sector", industries)
+        
+    with f_col3:
+        subsectors = ["All Sub-sectors"] + list(df_ipo["subsector"].unique())
+        selected_subsector = st.selectbox("Sub-sector Focus", subsectors)
+        
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# Apply Filters
+filtered_df = df_ipo.copy()
+if selected_exchange != "All Exchanges":
+    filtered_df = filtered_df[filtered_df["exchange"] == selected_exchange]
+if selected_industry != "All Industries":
+    filtered_df = filtered_df[filtered_df["industry"] == selected_industry]
+if selected_subsector != "All Sub-sectors":
+    filtered_df = filtered_df[filtered_df["subsector"] == selected_subsector]
+
+# --- LIVE DATA FETCHING VIA YAHOO FINANCE ---
+@st.cache_data(ttl=300)
+def fetch_live_performance(tickers):
+    performance_data = {}
+    for ticker in tickers:
+        try:
+            stock = yf.Ticker(ticker)
+            hist = stock.history(period="max")
+            if not hist.empty:
+                current_price = hist['Close'].iloc[-1]
+                prev_close = hist['Close'].iloc[-2] if len(hist) > 1 else current_price
+                change_pct = ((current_price - prev_close) / prev_close) * 100
+                history_df = hist[['Close']].reset_index()
+                history_df.columns = ['Date', 'Close']
+                performance_data[ticker] = {
+                    "price": current_price,
+                    "change": change_pct,
+                    "history": history_df,
+                    "market_cap": stock.info.get("marketCap", 0),
+                    "pe_ratio": stock.info.get("trailingPE", "N/A"),
+                    "volume": hist['Volume'].iloc[-1] if 'Volume' in hist else 0
+                }
+            else:
+                performance_data[ticker] = {"price": 0.0, "change": 0.0, "history": pd.DataFrame(), "market_cap": 0, "pe_ratio": "N/A", "volume": 0}
+        except Exception:
+            performance_data[ticker] = {"price": 0.0, "change": 0.0, "history": pd.DataFrame(), "market_cap": 0, "pe_ratio": "N/A", "volume": 0}
+    return performance_data
+
+live_data = fetch_live_performance(filtered_df["ticker"].tolist())
+
+# Enrich dataframe with live metrics
+for idx, row in filtered_df.iterrows():
+    t = row["ticker"]
+    filtered_df.loc[idx, "live_price"] = live_data[t]["price"]
+    filtered_df.loc[idx, "change_pct"] = live_data[t]["change"]
+    filtered_df.loc[idx, "market_cap"] = live_data[t]["market_cap"]
+    filtered_df.loc[idx, "pe_ratio"] = live_data[t]["pe_ratio"]
+
+# --- MAIN LAYOUT: TWO COLUMNS (Full Menu Selector Left | Deep-Dive Right) ---
+left_col, right_col = st.columns([1.2, 1.8], gap="large")
+
+with left_col:
+    st.markdown("<div class='section-header'>IPO Full Menu</div>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #86868B; font-size: 14px; margin-top: -10px; margin-bottom: 16px;'>Select a company to analyze live performance & comparable assets.</p>", unsafe_allow_html=True)
     
-    if search_query:
-        display_df = filtered_df[
-            filtered_df["Ticker"].str.contains(search_query, case=False, na=False) |
-            filtered_df["English Name"].str.contains(search_query, case=False, na=False) |
-            filtered_df["Chinese Name"].str.contains(search_query, case=False, na=False)
-        ]
+    # Selection mapping
+    stock_options = filtered_df.apply(lambda r: f"{r['ticker']} — {r['name_en']} ({r['name_cn']})", axis=1).tolist()
+    
+    if not stock_options:
+        st.warning("No listings match the current filter parameters.")
+        selected_stock_str = None
     else:
-        display_df = filtered_df
-
-    menu_table = display_df[["Ticker", "English Name", "Exchange", "Total Return (%)"]].reset_index(drop=True)
-
-    if not display_df.empty:
-        selected_ticker = st.selectbox(
-            "Select Enterprise",
-            options=display_df["Ticker"].tolist(),
-            format_func=lambda x: f"{x} - {display_df[display_df['Ticker'] == x]['English Name'].values[0]}"
-        )
-    else:
-        selected_ticker = None
-        st.warning("No listings match your search criteria.")
-
-    st.dataframe(menu_table, use_container_width=True, height=400)
-
-with col_right:
-    st.markdown("### **Performance Analytics**")
-    
-    if selected_ticker:
-        stock_info = df[df["Ticker"] == selected_ticker].iloc[0]
+        selected_stock_str = st.selectbox("Directory Selection", stock_options, label_visibility="collapsed")
         
+        # Render minimalist menu list cards
+        for idx, row in filtered_df.iterrows():
+            badge_class = f"badge-{row['exchange'].lower()}"
+            chg = live_data[row['ticker']]['change']
+            chg_color = "#34C759" if chg >= 0 else "#FF3B30"
+            chg_sign = "+" if chg >= 0 else ""
+            
+            st.markdown(f"""
+            <div class='apple-card' style='padding: 16px; margin-bottom: 12px;'>
+                <div style='display: flex; justify-content: space-between; align-items: center;'>
+                    <div>
+                        <span class='{badge_class}'>{row['exchange']}</span>
+                        <span style='font-weight: 600; font-size: 16px; margin-left: 8px;'>{row['name_en']}</span>
+                        <span style='color: #86868B; font-size: 14px; margin-left: 4px;'>{row['name_cn']}</span>
+                    </div>
+                    <div style='text-align: right;'>
+                        <div style='font-weight: 600; font-size: 15px;'>{row['ticker']}</div>
+                        <div style='color: {chg_color}; font-size: 13px; font-weight: 500;'>{chg_sign}{chg:.2f}%</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+with right_col:
+    st.markdown("<div class='section-header'>Deep-Dive Analytics Panel</div>", unsafe_allow_html=True)
+    
+    if selected_stock_str:
+        # Extract selected ticker
+        selected_ticker = selected_stock_str.split(" — ")[0]
+        selected_row = df_ipo[df_ipo["ticker"] == selected_ticker].iloc[0]
+        metrics = live_data[selected_ticker]
+        
+        # Display Company Header Card
         st.markdown(f"""
-            <div class="apple-card">
-                <h2 style="margin:0; font-size:22px;">{stock_info['English Name']}</h2>
-                <p style="margin:2px 0 12px 0; font-size:14px; color:#86868B; font-weight:400;">{stock_info['Chinese Name']} &bull; Listed: {stock_info['Listing Date']}</p>
-                <p style="margin:4px 0 16px 0; font-size:13px; color:#0066CC; font-weight:500;">{stock_info['Ticker']} &bull; {stock_info['Exchange']} &bull; {stock_info['Industry']} / {stock_info['Sub-Sector']}</p>
+        <div class='apple-card'>
+            <div style='display: flex; justify-content: space-between; align-items: flex-start;'>
+                <div>
+                    <span class='badge-{selected_row['exchange'].lower()}'>{selected_row['exchange']}</span>
+                    <h2 style='margin: 8px 0 4px 0; font-size: 28px; font-weight: 700;'>{selected_row['name_en']} <span style='color: #86868B; font-weight: 400;'>{selected_row['name_cn']}</span></h2>
+                    <p style='color: #86868B; font-size: 14px; margin: 0;'>Ticker: <b>{selected_row['ticker']}</b> &bull; Industry: {selected_row['industry']} ({selected_row['subsector']})</p>
+                </div>
+                <div style='text-align: right;'>
+                    <div style='font-size: 26px; font-weight: 700;'>${metrics['price']:.2f}</div>
+                    <div style='color: {'#34C759' if metrics['change'] >= 0 else '#FF3B30'}; font-weight: 600; font-size: 15px;'>
+                        {'+' if metrics['change'] >= 0 else ''}{metrics['change']:.2f}% Live Today
+                    </div>
+                </div>
+            </div>
+            
+            <hr style='border: none; border-top: 1px solid #E5E5EA; margin: 20px 0;'>
+            
+            <div style='display: flex; justify-content: space-between;'>
+                <div>
+                    <div style='color: #86868B; font-size: 12px; font-weight: 500;'>IPO Issue Price</div>
+                    <div style='font-weight: 600; font-size: 16px;'>${selected_row['issue_price']:.2f}</div>
+                </div>
+                <div>
+                    <div style='color: #86868B; font-size: 12px; font-weight: 500;'>Listing Date</div>
+                    <div style='font-weight: 600; font-size: 16px;'>{selected_row['ipo_date']}</div>
+                </div>
+                <div>
+                    <div style='color: #86868B; font-size: 12px; font-weight: 500;'>Market Capitalization</div>
+                    <div style='font-weight: 600; font-size: 16px;'>${metrics['market_cap']:,.0f}</div>
+                </div>
+                <div>
+                    <div style='color: #86868B; font-size: 12px; font-weight: 500;'>P/E Ratio</div>
+                    <div style='font-weight: 600; font-size: 16px;'>{metrics['pe_ratio']}</div>
+                </div>
+            </div>
+        </div>
         """, unsafe_allow_html=True)
-
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("IPO Price", f"${stock_info['IPO Price']:.2f}")
-        m2.metric("Current Price", f"${stock_info['Current Price']:.2f}", f"{stock_info['Total Return (%)']}%")
-        m3.metric("Proceeds", f"${stock_info['Proceeds (M)']:,.0f}M")
-        m4.metric("P/E Ratio", f"{stock_info['P/E Ratio']}x")
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=stock_info["Dates"],
-            y=stock_info["Price Series"],
-            mode="lines",
-            name="Performance",
-            line=dict(color="#0066CC", width=2.5),
-            fill="tozeroy",
-            fillcolor="rgba(0, 102, 204, 0.05)"
-        ))
-
-        fig.update_layout(
-            title=dict(text="<b>Post-IPO Valuation Trajectory</b>", font=dict(size=14, color="#1D1D1F")),
-            margin=dict(l=10, r=10, t=30, b=10),
-            height=260,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            xaxis=dict(showgrid=False, zeroline=False),
-            yaxis=dict(showgrid=True, gridcolor="rgba(0,0,0,0.06)", zeroline=False)
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        
+        # Stock Performance Chart
+        st.markdown("<div class='apple-card'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top: 0; font-size: 17px; font-weight: 600;'>Post-IPO Performance Trajectory</h4>", unsafe_allow_html=True)
+        
+        hist_df = metrics["history"]
+        if not hist_df.empty:
+            st.line_chart(hist_df.set_index('Date')['Close'], color="#0066CC", height=280)
+        else:
+            st.info("Performance chart history compiling from Yahoo Finance feed...")
         st.markdown("</div>", unsafe_allow_html=True)
-    else:
-        st.info("Select an enterprise from the directory to inspect financial metrics.")
+        
+        # Comparable Companies from Listed Universe
+        st.markdown("<div class='apple-card'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top: 0; font-size: 17px; font-weight: 600;'>Comparable Universe Peers</h4>", unsafe_allow_html=True)
+        
+        peers = df_ipo[(df_ipo["industry"] == selected_row["industry"]) & (df_ipo["ticker"] != selected_ticker)]
+        if peers.empty:
+            peers = df_ipo[df_ipo["ticker"] != selected_ticker].head(3)
+            
+        peer_cols = st.columns(min(len(peers), 3))
+        for idx, (_, peer) in enumerate(peers.head(3).iterrows()):
+            p_metrics = live_data[peer['ticker']]
+            p_chg = p_metrics['change']
+            with peer_cols[idx]:
+                st.markdown(f"""
+                <div style='background: #F5F5F7; padding: 14px; border-radius: 12px;'>
+                    <div style='font-size: 12px; color: #86868B;'>{peer['exchange']}</div>
+                    <div style='font-weight: 600; font-size: 14px;'>{peer['name_en']}</div>
+                    <div style='font-size: 13px; font-weight: 500; color: {'#34C759' if p_chg >= 0 else '#FF3B30'};'>
+                        {'+' if p_chg >= 0 else ''}{p_chg:.2f}%
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# --- BOTTOM SECTION: TOP PERFORMING STOCKS OVERALL & PER EXCHANGE ---
+st.markdown("<hr style='border: none; border-top: 1px solid #D2D2D7; margin: 40px 0;'>", unsafe_allow_html=True)
+st.markdown("<div class='section-header'>Market Performance Leaderboards</div>", unsafe_allow_html=True)
+
+# Build leaderboards dataframe
+leaderboard_df = df_ipo.copy()
+leaderboard_df["current_price"] = leaderboard_df["ticker"].map(lambda t: live_data[t]["price"])
+leaderboard_df["performance"] = leaderboard_df["ticker"].map(lambda t: live_data[t]["change"])
+
+l_col1, l_col2, l_col3, l_col4 = st.columns(4)
+
+def render_leaderboard_card(title, data_slice):
+    html_content = f"<div class='apple-card'><b>{title}</b><hr style='margin: 8px 0; border-top: 1px solid #E5E5EA;'>"
+    for _, row in data_slice.iterrows():
+        p_chg = live_data[row['ticker']]['change']
+        color = "#34C759" if p_chg >= 0 else "#FF3B30"
+        html_content += f"""
+        <div style='display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;'>
+            <span>{row['name_en']} ({row['exchange']})</span>
+            <span style='color: {color}; font-weight: 600;'>{'+' if p_chg >= 0 else ''}{p_chg:.2f}%</span>
+        </div>
+        """
+    html_content += "</div>"
+    return html_content
+
+top_overall = leaderboard_df.sort_values(by="performance", ascending=False).head(3)
+top_hkex = leaderboard_df[leaderboard_df["exchange"] == "HKEX"].sort_values(by="performance", ascending=False).head(3)
+top_sse = leaderboard_df[leaderboard_df["exchange"] == "SSE"].sort_values(by="performance", ascending=False).head(3)
+top_szse = leaderboard_df[leaderboard_df["exchange"] == "SZSE"].sort_values(by="performance", ascending=False).head(3)
+
+with l_col1:
+    st.markdown(render_leaderboard_card("🏆 Top Overall YTD", top_overall), unsafe_allow_html=True)
+with l_col2:
+    st.markdown(render_leaderboard_card("🇭🇰 HKEX Leaders (~85)", top_hkex), unsafe_allow_html=True)
+with l_col3:
+    st.markdown(render_leaderboard_card("🇨🇳 SSE Leaders (~19)", top_sse), unsafe_allow_html=True)
+with l_col4:
+    st.markdown(render_leaderboard_card("🇨🇳 SZSE Leaders (~16)", top_szse), unsafe_allow_html=True)
