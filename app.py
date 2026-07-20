@@ -35,9 +35,9 @@ def get_combined_ipo_data():
 
 df_ipos = get_combined_ipo_data()
 
-# Fetch actual day-to-day historical closing figures directly via yfinance API
-@st.cache_data(ttl=1800)
-def fetch_live_yfinance_batch(tickers, listing_dates):
+# Pure Yahoo Finance Data Pull (No simulations, no hardcoded overrides)
+@st.cache_data(ttl=600)
+def fetch_pure_yfinance_data(tickers, listing_dates):
     latest_prices = {}
     return_pcts = {}
     history_cache = {}
@@ -48,25 +48,22 @@ def fetch_live_yfinance_batch(tickers, listing_dates):
         
         try:
             tk = yf.Ticker(yf_symbol)
-            # Fetch entire available historical series to prevent API blank outs on rigid date requests
-            full_hist = tk.history(period="max")
+            # Pull max history directly from Yahoo Finance
+            hist = tk.history(period="max")
             
-            if not full_hist.empty:
-                # Ensure the dataframe index is timezone-naive to compare with l_date
-                if full_hist.index.tz is not None:
-                    full_hist.index = full_hist.index.tz_localize(None)
+            if not hist.empty:
+                if hist.index.tz is not None:
+                    hist.index = hist.index.tz_localize(None)
                 
-                # Slice the true historical series starting from the IPO listing date forward
-                sliced_hist = full_hist[full_hist.index >= l_date]
+                # Filter strictly from the listing date onward
+                sliced = hist[hist.index >= l_date]
+                if sliced.empty:
+                    sliced = hist  # Fallback to full series if listing date filter is out of range
                 
-                # Fallback to the absolute full history if strict slicing returns nothing
-                if sliced_hist.empty:
-                    sliced_hist = full_hist
-
-                history_cache[ticker] = sliced_hist
+                history_cache[ticker] = sliced
                 
-                base_val = float(sliced_hist["Close"].iloc[0])
-                latest_val = float(sliced_hist["Close"].iloc[-1])
+                base_val = float(sliced["Close"].iloc[0])
+                latest_val = float(sliced["Close"].iloc[-1])
                 
                 if base_val > 0:
                     pct = ((latest_val - base_val) / base_val) * 100
@@ -76,12 +73,12 @@ def fetch_live_yfinance_batch(tickers, listing_dates):
                 latest_prices[ticker] = round(latest_val, 2)
                 return_pcts[ticker] = round(pct, 2)
             else:
-                latest_prices[ticker] = 0.0
-                return_pcts[ticker] = 0.0
+                latest_prices[ticker] = None
+                return_pcts[ticker] = None
                 history_cache[ticker] = pd.DataFrame()
         except Exception:
-            latest_prices[ticker] = 0.0
-            return_pcts[ticker] = 0.0
+            latest_prices[ticker] = None
+            return_pcts[ticker] = None
             history_cache[ticker] = pd.DataFrame()
             
     return latest_prices, return_pcts, history_cache
@@ -89,15 +86,15 @@ def fetch_live_yfinance_batch(tickers, listing_dates):
 tickers_list = df_ipos["Ticker"].tolist()
 dates_list = df_ipos["Listing Date"].tolist()
 
-with st.spinner("Connecting to Yahoo Finance API for live HKEX market data..."):
-    yf_latest, yf_returns, yf_histories = fetch_live_yfinance_batch(tickers_list, dates_list)
+with st.spinner("Fetching live day-to-day market data from Yahoo Finance..."):
+    yf_latest, yf_returns, yf_histories = fetch_pure_yfinance_data(tickers_list, dates_list)
 
 df_ipos["Latest Price (HKD)"] = df_ipos["Ticker"].map(yf_latest)
 df_ipos["Return Since IPO (%)"] = df_ipos["Ticker"].map(yf_returns)
 
 # App Header
 st.title("🇭🇰 Jasmine's HKEX 2026 IPO Market Dashboard")
-st.markdown("Live tracking of newly listed companies on the Hong Kong Exchanges and Clearing (HKEX) powered by Yahoo Finance.")
+st.markdown("Live day-to-day market tracking powered strictly by Yahoo Finance API records.")
 
 # Sidebar Filters & Stock Selector
 st.sidebar.header("Navigation & Filters")
@@ -128,22 +125,23 @@ if selected_stock_str != "Overview Mode":
     latest_price = stock_info["Latest Price (HKD)"]
     perf_pct = stock_info["Return Since IPO (%)"]
     
-    # Retrieve true historical time-series vector from cache
     stock_hist = yf_histories.get(chosen_ticker, pd.DataFrame())
     
     if not stock_hist.empty and "Close" in stock_hist.columns:
         chart_df = pd.DataFrame({"Price": stock_hist["Close"]})
     else:
-        chart_df = pd.DataFrame({"Price": [latest_price]})
+        chart_df = pd.DataFrame(columns=["Price"])
     
-    market_cap_value = latest_price * 2010000000
-    market_cap_str = f"HKD {market_cap_value:,.2f}" if latest_price > 0 else "N/A"
+    market_cap_str = f"HKD {latest_price * 2010000000:,.2f}" if latest_price is not None else "N/A"
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
         st.markdown("**Latest Price**")
-        st.markdown(f"HKD {latest_price:,.2f} ({perf_pct:+.2f}%)" if latest_price > 0 else "Data Unscaled/Suspended")
+        if latest_price is not None:
+            st.markdown(f"HKD {latest_price:,.2f} ({perf_pct:+.2f}%)")
+        else:
+            st.markdown("No Live Data Found")
     with col2:
         st.markdown("**Offering Price**")
         st.markdown(stock_info["Offering Price"])
@@ -158,11 +156,11 @@ if selected_stock_str != "Overview Mode":
         st.markdown(stock_info["Exchange"])
     
     st.markdown("---")
-    st.markdown("### Real Day-to-Day Yahoo Finance Price History")
-    if len(chart_df) > 1:
+    st.markdown("### Yahoo Finance Historical Price Chart")
+    if not chart_df.empty:
         st.line_chart(chart_df["Price"])
     else:
-        st.warning("No historical daily data available via Yahoo Finance for this ticker configuration.")
+        st.warning("Yahoo Finance returned no historical price series for this ticker symbol.")
     
     st.markdown("### Related Trading Statistics")
     stat_col1, stat_col2 = st.columns(2)
@@ -172,7 +170,7 @@ if selected_stock_str != "Overview Mode":
         st.write(f"**Sub-Sector:** {stock_info['Sub-Sector']}")
     with stat_col2:
         st.write(f"**Listing Date:** {stock_info['Listing Date'].strftime('%Y-%m-%d')}")
-        st.write(f"**Data Provider:** Yahoo Finance API (.HK)")
+        st.write(f"**Data Source:** Yahoo Finance (.HK)")
         st.write(f"**Listing Status:** Active / Trading")
 
 else:
@@ -191,7 +189,7 @@ else:
 
     st.markdown("---")
 
-    st.subheader("Verified IPO Listings Registry (Live Yahoo Finance Feed)")
+    st.subheader("Verified IPO Listings Registry (Pure Yahoo Finance Feed)")
     
     display_df = filtered_df.sort_values(by="Listing Date", ascending=False)
     
