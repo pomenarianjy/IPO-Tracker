@@ -57,25 +57,39 @@ if selected_sub_sector != "All":
 st.markdown("---")
 
 
-# --- YAHOO FINANCE LIVE CONNECTOR ---
+# --- YAHOO FINANCE LIVE CONNECTOR (WITH 5-DIGIT HKEX PADDING) ---
 @st.cache_data(ttl=600)
 def fetch_live_data(tickers):
   live_data = {}
   for t in tickers:
-    try:
-      stock = yf.Ticker(t)
-      hist = stock.history(period="max")
-      info = stock.info
-      if not hist.empty:
-        current_price = hist["Close"].iloc[-1]
-        live_data[t] = {
-            "Current Price": current_price,
-            "History": hist,
-            "Info": info,
-        }
-      else:
-        live_data[t] = None
-    except Exception:
+    clean_code = t.replace(".HK", "")
+    # Try multiple Yahoo Finance ticker suffixes commonly used for Hong Kong stocks
+    variations = [
+        f"{clean_code.zfill(4)}.HK",  # standard 4-digit zero-padded e.g. 2249.HK -> 2249.HK
+        f"{clean_code.zfill(5)}.HK",  # 5-digit zero-padded variant e.g. 02249.HK
+        f"0{clean_code.zfill(4)}.HK",
+    ]
+
+    success = False
+    for candidate in variations:
+      try:
+        stock = yf.Ticker(candidate)
+        hist = stock.history(period="max")
+        info = stock.info
+        if not hist.empty:
+          current_price = hist["Close"].iloc[-1]
+          live_data[t] = {
+              "Current Price": current_price,
+              "History": hist,
+              "Info": info,
+              "ResolvedTicker": candidate,
+          }
+          success = True
+          break
+      except Exception:
+        continue
+
+    if not success:
       live_data[t] = None
   return live_data
 
@@ -115,27 +129,30 @@ for index, row in filtered_df.iterrows():
 df_display = pd.DataFrame(performance_rows)
 
 
-# --- LAYOUT: FULL MENU & RIGHT-HAND ANALYTICS PANEL ---
-col_menu, col_panel = st.columns([1.3, 1.2])
+# --- LAYOUT: STUCK LEFT PANEL & RIGHT ANALYTICS PANEL ---
+# We use fixed column widths so the left menu remains neatly locked and visible on the left.
+col_menu, col_panel = st.columns([1.1, 1.3])
 
 with col_menu:
   st.subheader(
-      f"📋 Full Menu / Listed Universe ({len(df_display)} Companies)"
+      f"📋 Listed Universe Directory ({len(df_display)} Companies)"
   )
-  st.markdown("Ticker, English Name, and Chinese Name directory:")
+  st.markdown("Select a stock from the dropdown or browse the table below:")
 
   if df_display.empty:
     st.warning("No companies match the chosen filters.")
   else:
+    # MOVE THE STOCK SELECT BOX TO ON TOP OF THE WHOLE LIST
+    selected_clean_ticker = st.selectbox(
+        "🎯 Select Stock to Analyze",
+        df_display["Ticker"].tolist(),
+    )
+
     menu_view = df_display[
         ["Ticker", "English Name", "Chinese Name", "Exchange", "Gain/Loss (%)"]
     ]
-    st.dataframe(menu_view, use_container_width=True, height=450, hide_index=True)
+    st.dataframe(menu_view, use_container_width=True, height=420, hide_index=True)
 
-    selected_clean_ticker = st.selectbox(
-        "Select a stock to open right-hand panel analytics:",
-        df_display["Ticker"].tolist(),
-    )
     selected_row = df_display[df_display["Ticker"] == selected_clean_ticker].iloc[
         0
     ]
@@ -144,7 +161,7 @@ with col_menu:
 with col_panel:
   st.subheader(f"📈 Analytics Panel: {selected_clean_ticker}")
 
-  if full_ticker in live_market_data and live_market_data[full_ticker]:
+  if not df_display.empty and full_ticker in live_market_data and live_market_data[full_ticker]:
     m_data = live_market_data[full_ticker]
     info = m_data["Info"]
     hist = m_data["History"]
@@ -217,7 +234,11 @@ with col_panel:
       st.info("No comparable peers in the current sub-sector view.")
 
   else:
-    st.error("Could not load Yahoo Finance live metrics for this stock.")
+    st.error(
+        f"Could not load Yahoo Finance live metrics for ticker {full_ticker}."
+        " Please ensure the ticker format matches Yahoo Finance's listing"
+        " requirements."
+    )
 
 # --- BOTTOM SECTION: TOP PERFORMING STOCKS ---
 st.markdown("---")
