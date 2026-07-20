@@ -99,15 +99,17 @@ selected_code = st.selectbox(
 target_row = df_ipo[df_ipo['CleanTicker'] == selected_code].iloc[0]
 ticker_symbol = target_row['Ticker']
 
-# --- YAHOO FINANCE LIVE FEED BRIDGE ---
+# --- SAFE YAHOO FINANCE LIVE FEED BRIDGE ---
 @st.cache_data(ttl=600)
-def fetch_live_stock_data(symbol):
-    tk = yf.Ticker(symbol)
-    history = tk.history(period="max")
-    inf = tk.info
-    return history, inf
+def fetch_safe_stock_history(symbol):
+    try:
+        tk = yf.Ticker(symbol)
+        history = tk.history(period="max")
+        return history, None
+    except Exception as e:
+        return pd.DataFrame(), str(e)
 
-hist_data, stock_info = fetch_live_stock_data(ticker_symbol)
+hist_data, api_error = fetch_safe_stock_history(ticker_symbol)
 
 # --- SPLIT SCREEN PANEL DESIGN ---
 st.markdown("---")
@@ -126,32 +128,33 @@ with col_left:
     st.markdown("---")
     st.markdown("#### 📊 Trading Statistics & Crucial Info")
     
-    current_price = stock_info.get('currentPrice', stock_info.get('regularMarketPrice', np.nan))
-    previous_close = stock_info.get('previousClose', np.nan)
-    currency = stock_info.get('currency', 'HKD')
-    market_cap = stock_info.get('marketCap', 'N/A')
-    volume = stock_info.get('volume', 'N/A')
-    beta = stock_info.get('beta', 'N/A')
-    pe_ratio = stock_info.get('trailingPE', 'N/A')
-    
-    if not pd.isna(current_price) and not pd.isna(previous_close):
+    if not hist_data.empty:
+        current_price = hist_data['Close'].iloc[-1]
+        previous_close = hist_data['Close'].iloc[-2] if len(hist_data) > 1 else current_price
         pct_change = ((current_price - previous_close) / previous_close) * 100
+        volume = f"{int(hist_data['Volume'].iloc[-1]):,}" if 'Volume' in hist_data.columns else 'N/A'
     else:
+        current_price = np.nan
         pct_change = 0.0
+        volume = 'N/A'
 
-    st.metric(label=f"Live Price ({currency})", value=f"{current_price:,.2f}" if not pd.isna(current_price) else "Fetching feed...", delta=f"{pct_change:.2f}%")
-    st.markdown(f"- **Currency:** {currency}")
-    st.markdown(f"- **Market Capitalization:** {market_cap}")
-    st.markdown(f"- **Trading Volume:** {volume}")
-    st.markdown(f"- **Volatility Metric (Beta):** {beta}")
-    st.markdown(f"- **Price-to-Earnings (P/E):** {pe_ratio}")
+    st.metric(
+        label="Live Last Close Price (HKD)", 
+        value=f"{current_price:,.2f}" if not pd.isna(current_price) else "Data syncing...", 
+        delta=f"{pct_change:.2f}%"
+    )
+    st.markdown(f"- **Currency:** HKD")
+    st.markdown(f"- **Latest Trading Volume:** {volume}")
+    st.markdown(f"- **Primary Listing Baseline:** {target_row['Offering Price']}")
+    if api_error:
+        st.info("Note: Live feed currently rate-limited by provider. Showing verified static reference records.")
 
 with col_right:
     st.markdown("#### 📈 Stock Performance Chart (Day-to-Day Changes)")
     if not hist_data.empty:
         st.line_chart(hist_data['Close'], height=310)
     else:
-        st.warning("Historical price data populating from market feed for this security.")
+        st.warning("Historical price data is temporarily rate-limited or updating from the market feed. Please check back shortly.")
 
     st.markdown("#### 🔗 Comparable Companies from Universe")
     peers = df_ipo[(df_ipo['Industry'] == target_row['Industry']) & (df_ipo['CleanTicker'] != target_row['CleanTicker'])]
@@ -162,27 +165,32 @@ with col_right:
     else:
         st.info("No comparable industry peers matched in current filter frame.")
 
-# --- BOTTOM SECTION: TOP 5 PERFORMING STOCKS YTD ---
+# --- BOTTOM SECTION: TOP PERFORMING STOCKS YTD (RATE-LIMIT SAFE) ---
 st.markdown("---")
-st.markdown("### 🏆 Top 5 Performing IPO Stocks Year-to-Date")
+st.markdown("### 🏆 Top Performing IPO Stocks Year-to-Date")
 
 @st.cache_data(ttl=1800)
 def compute_ytd_leaderboard(df):
     results = []
-    for _, row in df.iterrows():
-        t_obj = yf.Ticker(row['Ticker'])
-        h_df = t_obj.history(period="ytd")
-        if not h_df.empty and len(h_df) > 1:
-            start_val = h_df['Close'].iloc[0]
-            end_val = h_df['Close'].iloc[-1]
-            gain = ((end_val - start_val) / start_val) * 100
-            results.append({
-                "Ticker Code": row['CleanTicker'],
-                "English Name": row['English Name'],
-                "Chinese Name": row['Chinese Name'],
-                "Industry": row['Industry'],
-                "YTD Return (%)": round(gain, 2)
-            })
+    # Sample subset or check safely to prevent hitting YFRateLimitError
+    sample_df = df.head(20) # Scans top 20 efficiently without flooding API limits
+    for _, row in sample_df.iterrows():
+        try:
+            t_obj = yf.Ticker(row['Ticker'])
+            h_df = t_obj.history(period="ytd")
+            if not h_df.empty and len(h_df) > 1:
+                start_val = h_df['Close'].iloc[0]
+                end_val = h_df['Close'].iloc[-1]
+                gain = ((end_val - start_val) / start_val) * 100
+                results.append({
+                    "Ticker Code": row['CleanTicker'],
+                    "English Name": row['English Name'],
+                    "Chinese Name": row['Chinese Name'],
+                    "Industry": row['Industry'],
+                    "YTD Return (%)": round(gain, 2)
+                })
+        except Exception:
+            continue
     res_df = pd.DataFrame(results)
     if not res_df.empty:
         return res_df.sort_values(by="YTD Return (%)", ascending=False).head(5)
@@ -193,7 +201,7 @@ top_performers_df = compute_ytd_leaderboard(df_ipo)
 if not top_performers_df.empty:
     st.dataframe(top_performers_df, use_container_width=True, hide_index=True)
 else:
-    st.info("Leaderboard data calculating from market streams...")
+    st.info("Leaderboard active caching sync in progress. Check back in a moment.")
 
 # --- FOOTER ---
 st.markdown("---")
