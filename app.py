@@ -91,7 +91,7 @@ APPLE_CSS = """
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
 
-# 2. Complete Historical & Public Data-Calibrated Universe (2024-2026) including Zhipu AI & Flagships
+# 2. Complete Historical & Public Data-Calibrated Universe (2024-2026) with Corrected Taxonomy
 @st.cache_data
 def load_ipo_universe():
     exchanges_meta = [
@@ -114,7 +114,7 @@ def load_ipo_universe():
 
     master_listings = []
     
-    # Pre-define real high-profile flagship entries for precision injection
+    # Real high-profile flagship entries with precise sector/sub-sector assignment
     flagships = [
         {
             "ticker": "02513.HK",
@@ -129,7 +129,7 @@ def load_ipo_universe():
             "market_cap": 440.95
         },
         {
-            "ticker": "0100.HK",
+            "ticker": "00100.HK",
             "eng": "MiniMax Group Inc.",
             "chi": "名之梦科技有限公司",
             "exchange": "HKEX (Main Board & GEM)",
@@ -163,12 +163,29 @@ def load_ipo_universe():
         for yr_str, count in [("2024", meta["2024"]), ("2025", meta["2025"]), ("2026", meta["2026"])]:
             yr = int(yr_str)
             for i in range(count):
-                # Avoid collision with explicitly added flagships
                 if yr == 2026 and exch_name == "HKEX (Main Board & GEM)" and i < 3:
                     continue
 
-                ind = industries[(id_counter + i) % len(industries)]
-                sub = sub_sectors[ind][(id_counter * i) % len(sub_sectors[ind])]
+                # Ensure deterministic yet clean mapping (preventing semiconductor mismatch)
+                # Map specific generator indices or modulo cleanly
+                ind_idx = (id_counter + i) % len(industries)
+                ind = industries[ind_idx]
+                
+                # If name implies semiconductor or hardware, strictly force Technology / Semiconductors
+                eng_seed = [
+                    "Aero Horizon Tech", "Nova Semiconductor", "BioGen Nexus", "Zenith Energy Group", 
+                    "QuantEdge AI", "Grand Harvest Consumer", "Vertex Robotics", "Omni Logistics Holding",
+                    "Pioneer Bio-Pharma", "Sino Clean Energy", "Apex Intelligent Systems", "Digital Cloud China"
+                ][id_counter % 12]
+
+                if "Semiconductor" in eng_seed or "Chip" in eng_seed:
+                    ind = "Technology"
+                    sub = "Semiconductors"
+                elif "Bio" in eng_seed or "Pharma" in eng_seed:
+                    ind = "Healthcare"
+                    sub = "Biotech"
+                else:
+                    sub = sub_sectors[ind][(id_counter * i) % len(sub_sectors[ind])]
                 
                 if "HKEX" in exch_name:
                     ticker = f"{id_counter + 3000:05d}.HK"
@@ -178,18 +195,13 @@ def load_ipo_universe():
                 else:
                     ticker = f"301{id_counter % 900:03d}.SZ"
 
-                eng_names = [
-                    "Aero Horizon Tech", "Nova Semiconductor", "BioGen Nexus", "Zenith Energy Group", 
-                    "QuantEdge AI", "Grand Harvest Consumer", "Vertex Robotics", "Omni Logistics Holding",
-                    "Pioneer Bio-Pharma", "Sino Clean Energy", "Apex Intelligent Systems", "Digital Cloud China"
-                ]
                 chi_names = [
                     "地平线科技", "新星半导体", "百奥基因", "天能能源", 
                     "量能科技", "宏丰消费", "极石机器人", "中通物流",
                     "先锋生物", "华夏清洁", "巅峰智能", "数科中国"
                 ]
                 
-                eng = f"{eng_names[id_counter % len(eng_names)]} {i+1}"
+                eng = f"{eng_seed} {i+1}"
                 chi = f"{chi_names[id_counter % len(chi_names)]} {i+1}号"
                 ipo_price = round(float(np.random.uniform(5.0, 150.0)), 2)
 
