@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from ipo_data import load_verified_hk_ipos_part1
-from ipo_data2 import load_verified_hk_ipos_part2
 
 # Page Configuration
 st.set_page_config(
@@ -11,21 +9,25 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS to significantly shrink the font size for the 4th metric card (Est. Market Cap) so the full number fits
+# Custom CSS to force text wrapping, shrink font size, and expand container width for all metric values
 st.markdown("""
     <style>
-    div[data-testid="metric-container"]:nth-of-type(4) div[data-testid="stMetricValue"] {
-        font-size: 0.95rem !important;
-        white-space: nowrap !important;
+    div[data-testid="stMetricValue"] {
+        font-size: 0.85rem !important;
+        white-space: normal !important;
+        word-break: break-all !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Load and Combine Data from Both Modules
+# Combined Single Data Source (Replacing ipo_data part 1 and part 2 separation)
 @st.cache_data
 def get_combined_ipo_data():
+    from ipo_data import load_verified_hk_ipos_part1, load_verified_hk_ipos_part2
+    
     part1 = load_verified_hk_ipos_part1()
     part2 = load_verified_hk_ipos_part2()
+    
     combined = part1 + part2
     df = pd.DataFrame(combined)
     df["Listing Date"] = pd.to_datetime(df["Listing Date"])
@@ -91,14 +93,26 @@ if selected_stock_str != "Overview Mode":
     
     market_cap_str = f"HKD {market_cap_value:,.2f}"
     
-    # Display Key Statistics Cards
-    m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("Latest Price", f"HKD {latest_price:.2f}", f"{perf_pct:+.2f}%")
-    m2.metric("Offering Price", stock_info["Offering Price"])
-    m3.metric("Currency", "HKD")
-    m4.metric("Est. Market Cap", market_cap_str)
-    m5.metric("Exchange Board", stock_info["Exchange"])
+    # Display Key Statistics Cards using standard text fields inside columns to prevent clipping
+    col1, col2, col3, col4, col5 = st.columns(5)
     
+    with col1:
+        st.markdown("**Latest Price**")
+        st.markdown(f"HKD {latest_price:.2f} ({perf_pct:+.2f}%)")
+    with col2:
+        st.markdown("**Offering Price**")
+        st.markdown(stock_info["Offering Price"])
+    with col3:
+        st.markdown("**Currency**")
+        st.markdown("HKD")
+    with col4:
+        st.markdown("**Est. Market Cap**")
+        st.markdown(market_cap_str)
+    with col5:
+        st.markdown("**Exchange Board**")
+        st.markdown(stock_info["Exchange"])
+    
+    st.markdown("---")
     st.markdown("### Day-to-Day Price Trend Since Listing")
     st.line_chart(chart_df["Price"])
     
