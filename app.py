@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from ipo_data import load_verified_hk_ipos_part1
 from ipo_data2 import load_verified_hk_ipos_part2
 
@@ -63,10 +64,9 @@ if selected_stock_str != "Overview Mode":
     else:
         date_range = pd.date_range(start=listing_date, end=listing_date, freq="B")
         
-    import numpy as np
     np.random.seed(hash(chosen_ticker) % 2**32)
     base_price = float(stock_info["Offering Price"].replace("HKD ", ""))
-    price_fluctuations = np.random.normal(loc=0.002, cat=0.02, size=len(date_range)) if hasattr(np.random, 'normal') else np.random.randn(len(date_range)) * 0.02
+    price_fluctuations = np.random.normal(loc=0.002, scale=0.02, size=len(date_range))
     simulated_prices = base_price * np.cumprod(1 + price_fluctuations)
     
     chart_df = pd.DataFrame({
