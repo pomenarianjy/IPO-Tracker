@@ -91,7 +91,7 @@ APPLE_CSS = """
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
 
-# 2. Complete Historical & Public Data-Calibrated Universe (2024-2026) with Corrected Taxonomy
+# 2. Complete Historical & Public Data-Calibrated Universe with Strict Unique Naming & Real Sector Alignment
 @st.cache_data
 def load_ipo_universe():
     exchanges_meta = [
@@ -112,9 +112,97 @@ def load_ipo_universe():
         "Real Estate": ["PropTech", "Logistics Real Estate"]
     }
 
+    # Distinct name banks to ensure no duplicate names across items
+    tech_eng_pool = [
+        "Aero Horizon Tech", "Nova Semiconductor", "QuantEdge AI", "Digital Cloud China", 
+        "Apex Intelligent Systems", "CyberCore Micro", "Silicon Bridge", "NextGen Networks",
+        "MetaVision Systems", "DataPulse Software", "DeepTech Solutions", "InfiniCloud Corp",
+        "Alpha Quantum", "BlueChip Foundry", "OmniNet Systems", "ByteDance Ecosystem Partner"
+    ]
+    tech_chi_pool = [
+        "地平线科技", "新星半导体", "量能科技", "数科中国", 
+        "巅峰智能", "赛博核心", "硅谷桥梁", "次世代网络",
+        "视界科技", "数据脉冲", "深科技术", "无限云端",
+        "阿尔法量子", "蓝芯半导体", "全网系统", "字节生态伙伴"
+    ]
+
+    hc_eng_pool = [
+        "BioGen Nexus", "Pioneer Bio-Pharma", "MediCare Innovations", "GeneProbe Therapeutics",
+        "StemCell Horizon", "ImmunoCure Pharma", "Vitalis Medical", "Panacea Life Sciences"
+    ]
+    hc_chi_pool = [
+        "百奥基因", "先锋生物", "美迪康创新", "基因探针",
+        "干细胞地平线", "免疫cure医药", "维泰医疗", "万灵生命科学"
+    ]
+
+    ne_eng_pool = [
+        "Zenith Energy Group", "Sino Clean Energy", "GreenVolt Power", "Solaris Tech",
+        "EcoBattery Solutions", "WindFlow Power", "Hydrogen Frontier", "CleanGrid Innovations"
+    ]
+    ne_chi_pool = [
+        "天能能源", "华夏清洁", "绿伏动力", "索拉里斯科技",
+        "生态电池", "风向电力", "氢能前沿", "清洁电网创新"
+    ]
+
+    cons_eng_pool = [
+        "Grand Harvest Consumer", "Pacific Retail Group", "Urban Gourmet F&B", "Lifestyle Brands",
+        "HomeSmart Appliances", "FreshMarket Express", "Summit Apparel", "Aura Consumer Goods"
+    ]
+    cons_chi_pool = [
+        "宏丰消费", "太平洋零售", "都市美食餐饮", "生活方式品牌",
+        "智能家居家电", "鲜市快线", "巅峰服饰", "光环消费品"
+    ]
+
+    ind_eng_pool = [
+        "Vertex Robotics", "Omni Logistics Holding", "Advanced Machining Corp", " Titan Heavy Industries",
+        "Precision Automation", "Global Freight Tech", "MegaConstruct Systems", "Swift Logistics"
+    ]
+    ind_chi_pool = [
+        "极石机器人", "中通物流", "先进机械制造", "泰坦重工",
+        "精密自动化", "全球货运科技", "巨构系统", "迅捷物流"
+    ]
+
+    mat_eng_pool = [
+        "Specialty Chem Corp", "Global Minerals & Metals", "EcoMaterials Group", "Advanced Alloys",
+        "Titanium Resources", "RareEarth Tech", "GreenChemical Solutions", "PureSubstance Inc"
+    ]
+    mat_chi_pool = [
+        "特种化学", "全球矿业金属", "绿色材料集团", "先进合金",
+        "钛资源", "稀土科技", "绿色化工方案", "纯质实业"
+    ]
+
+    fin_eng_pool = [
+        "Fintech Global Holdings", "Apex Investment Capital", "Pacific Trust Brokerage", "Sino Wealth Management",
+        "Quantum Insurance", "Meridian Financial", "Vertex Capital Partners", "Prime Credit Solutions"
+    ]
+    fin_chi_pool = [
+        "金融科技控股", "巅峰投资资本", "太平洋信托经纪", "华夏财富管理",
+        "量子保险", "子午线金融", "顶点资本合伙", "优品信贷方案"
+    ]
+
+    re_eng_pool = [
+        "PropTech Global", "Metro Logistics Real Estate", "Urban Space Development", "Skyline Properties",
+        "Prime Commercial Space", "Horizon Real Estate Trust", "Nexus Logistics Parks", "Terra Urban Living"
+    ]
+    re_chi_pool = [
+        "地产科技全球", "都市物流地产", "城市空间开发", "天际置业",
+        "优品商业空间", "地平线房产信托", "纽克斯物流园区", "大地都市生活"
+    ]
+
+    pools = {
+        "Technology": (tech_eng_pool, tech_chi_pool),
+        "Healthcare": (hc_eng_pool, hc_chi_pool),
+        "New Energy": (ne_eng_pool, ne_chi_pool),
+        "Consumer": (cons_eng_pool, cons_chi_pool),
+        "Industrials": (ind_eng_pool, ind_chi_pool),
+        "Materials": (mat_eng_pool, mat_chi_pool),
+        "Financials": (fin_eng_pool, fin_chi_pool),
+        "Real Estate": (re_eng_pool, re_chi_pool),
+    }
+
     master_listings = []
     
-    # Real high-profile flagship entries with precise sector/sub-sector assignment
+    # Real high-profile flagship entries
     flagships = [
         {
             "ticker": "02513.HK",
@@ -166,27 +254,18 @@ def load_ipo_universe():
                 if yr == 2026 and exch_name == "HKEX (Main Board & GEM)" and i < 3:
                     continue
 
-                # Ensure deterministic yet clean mapping (preventing semiconductor mismatch)
-                # Map specific generator indices or modulo cleanly
-                ind_idx = (id_counter + i) % len(industries)
-                ind = industries[ind_idx]
+                # Rotate cleanly through industries so distribution is balanced and correct
+                ind = industries[id_counter % len(industries)]
+                sub = sub_sectors[ind][(id_counter + i) % len(sub_sectors[ind])]
                 
-                # If name implies semiconductor or hardware, strictly force Technology / Semiconductors
-                eng_seed = [
-                    "Aero Horizon Tech", "Nova Semiconductor", "BioGen Nexus", "Zenith Energy Group", 
-                    "QuantEdge AI", "Grand Harvest Consumer", "Vertex Robotics", "Omni Logistics Holding",
-                    "Pioneer Bio-Pharma", "Sino Clean Energy", "Apex Intelligent Systems", "Digital Cloud China"
-                ][id_counter % 12]
+                eng_pool, chi_pool = pools[ind]
+                eng_base = eng_pool[(id_counter + i) % len(eng_pool)]
+                chi_base = chi_pool[(id_counter + i) % len(chi_pool)]
 
-                if "Semiconductor" in eng_seed or "Chip" in eng_seed:
-                    ind = "Technology"
-                    sub = "Semiconductors"
-                elif "Bio" in eng_seed or "Pharma" in eng_seed:
-                    ind = "Healthcare"
-                    sub = "Biotech"
-                else:
-                    sub = sub_sectors[ind][(id_counter * i) % len(sub_sectors[ind])]
-                
+                # Guarantee completely unique naming identifiers per row index
+                eng = f"{eng_base} {id_counter}"
+                chi = f"{chi_base} {id_counter}号"
+
                 if "HKEX" in exch_name:
                     ticker = f"{id_counter + 3000:05d}.HK"
                     if len(ticker) > 9: ticker = f"0{id_counter % 9999:04d}.HK"
@@ -195,14 +274,6 @@ def load_ipo_universe():
                 else:
                     ticker = f"301{id_counter % 900:03d}.SZ"
 
-                chi_names = [
-                    "地平线科技", "新星半导体", "百奥基因", "天能能源", 
-                    "量能科技", "宏丰消费", "极石机器人", "中通物流",
-                    "先锋生物", "华夏清洁", "巅峰智能", "数科中国"
-                ]
-                
-                eng = f"{eng_seed} {i+1}"
-                chi = f"{chi_names[id_counter % len(chi_names)]} {i+1}号"
                 ipo_price = round(float(np.random.uniform(5.0, 150.0)), 2)
 
                 master_listings.append({
