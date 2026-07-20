@@ -11,6 +11,15 @@ st.set_page_config(
     layout="wide"
 )
 
+# Custom CSS to shrink metric value font size specifically for the Market Cap card to prevent clipping
+st.markdown("""
+    <style>
+    div[data-testid="metric-container"]:nth-of-type(4) div[data-testid="stMetricValue"] {
+        font-size: 1.3rem !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Load and Combine Data from Both Modules
 @st.cache_data
 def get_combined_ipo_data():
