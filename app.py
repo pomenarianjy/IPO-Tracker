@@ -9,6 +9,7 @@ st.set_page_config(
     page_title="Jasmine’s HK & China IPO Tracker",
     page_icon="",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 APPLE_CSS = """
@@ -75,6 +76,13 @@ APPLE_CSS = """
         color: #86868B;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+    }
+
+    /* Force Sidebar Visibility & Width */
+    [data-testid="stSidebar"] {
+        background-color: #F5F5F7 !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.05);
+        min-width: 280px !important;
     }
 </style>
 """
@@ -278,7 +286,35 @@ def load_ipo_universe():
 
 df = load_ipo_universe()
 
-# 3. Header Section with Top-Right Exchange Official Listing Counters for Current Year
+# 3. SIDEBAR FILTERS & CONTROLS (Moved back to the left sidebar)
+st.sidebar.markdown("### **Filters & Controls**")
+st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Full public exchange database (2024–2026).</p>', unsafe_allow_html=True)
+
+selected_exchanges = st.sidebar.multiselect(
+    "Stock Exchanges",
+    options=df["Exchange"].unique().tolist(),
+    default=df["Exchange"].unique().tolist()
+)
+
+selected_years = st.sidebar.multiselect(
+    "Listing Years",
+    options=[2026, 2025, 2024],
+    default=[2026, 2025, 2024]
+)
+
+selected_industries = st.sidebar.multiselect(
+    "All Industry Sectors",
+    options=df["Industry"].unique().tolist(),
+    default=df["Industry"].unique().tolist()
+)
+
+filtered_df = df[
+    df["Exchange"].isin(selected_exchanges) &
+    df["Listing Year"].isin(selected_years) &
+    df["Industry"].isin(selected_industries)
+]
+
+# 4. Header Section with Top-Right Exchange Official Listing Counters for Current Year
 header_col1, header_col2 = st.columns([2.2, 2.8])
 
 with header_col1:
@@ -316,41 +352,6 @@ with header_col2:
 
 st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
 
-# 4. MAIN PAGE PERMANENT FILTER PANEL (Ensuring filters are always directly on screen and impossible to hide)
-st.markdown("### **Market Filters & Controls**")
-st.markdown('<p style="font-size:12px; color:#86868B; margin-top:-8px;">Full public exchange database screening (2024–2026).</p>', unsafe_allow_html=True)
-
-filter_col1, filter_col2, filter_col3 = st.columns(3)
-
-with filter_col1:
-    selected_exchanges = st.multiselect(
-        "Stock Exchanges",
-        options=df["Exchange"].unique().tolist(),
-        default=df["Exchange"].unique().tolist()
-    )
-
-with filter_col2:
-    selected_years = st.multiselect(
-        "Listing Years",
-        options=[2026, 2025, 2024],
-        default=[2026, 2025, 2024]
-    )
-
-with filter_col3:
-    selected_industries = st.multiselect(
-        "All Industry Sectors",
-        options=df["Industry"].unique().tolist(),
-        default=df["Industry"].unique().tolist()
-    )
-
-filtered_df = df[
-    df["Exchange"].isin(selected_exchanges) &
-    df["Listing Year"].isin(selected_years) &
-    df["Industry"].isin(selected_industries)
-]
-
-st.markdown("---")
-
 # 5. Main Content Layout: Split Panel
 col_left, col_right = st.columns([1.1, 1.4], gap="large")
 
@@ -379,7 +380,7 @@ with col_left:
         )
     else:
         selected_ticker = None
-        st.warning("No companies match your active filters. Please adjust the filter options above.")
+        st.warning("No companies match your active filters. Please adjust the sidebar options.")
 
     st.dataframe(menu_table, use_container_width=True, height=400)
 
