@@ -88,11 +88,11 @@ APPLE_CSS = """
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
 
-# 2. Comprehensive Multi-Exchange Universe (HKEX, SSE Shanghai, SZSE Shenzhen for 2026)
+# 2. Comprehensive Multi-Exchange Universe (Expanded HKEX 80+ Registry & A-Shares)
 @st.cache_data
 def load_ipo_universe():
     master_listings = [
-        # --- HKEX Listings (Traditional Chinese & English) ---
+        # --- HKEX Core Anchor Listings ---
         {
             "ticker": "02513.HK",
             "eng": "ZHIPU AI",
@@ -214,7 +214,7 @@ def load_ipo_universe():
             "market_cap": 95.60
         },
 
-        # --- SSE Shanghai Stock Exchange Listings (Simplified Chinese & Official Enterprise Name) ---
+        # --- SSE Shanghai Stock Exchange Listings ---
         {
             "ticker": "688001.SH",
             "eng": "AMLOGIC (SHANGHAI) CO., LTD.",
@@ -251,68 +251,8 @@ def load_ipo_universe():
             "current_override": 23.50,
             "market_cap": 460.20
         },
-        {
-            "ticker": "688223.SH",
-            "eng": "CENTURY IRIS SHANGHAI AI TECH",
-            "chi": "上海百視通人工智能科技股份有限公司",
-            "exchange": "SSE (Star & Main Market)",
-            "year": 2026,
-            "industry": "Technology",
-            "sub": "Artificial Intelligence",
-            "ipo_price": 45.20,
-            "current_override": 52.80,
-            "market_cap": 18.90
-        },
-        {
-            "ticker": "688339.SH",
-            "eng": "NANJING CHIP-GRAVITY SEMICONDUCTOR",
-            "chi": "南京芯重力半導體股份有限公司",
-            "exchange": "SSE (Star & Main Market)",
-            "year": 2026,
-            "industry": "Technology",
-            "sub": "Semiconductors",
-            "ipo_price": 64.50,
-            "current_override": 71.20,
-            "market_cap": 24.60
-        },
-        {
-            "ticker": "688516.SH",
-            "eng": "SUZHOU NANOTECH ADVANCED MATERIALS",
-            "chi": "蘇州納米新材料股份有限公司",
-            "exchange": "SSE (Star & Main Market)",
-            "year": 2026,
-            "industry": "Materials",
-            "sub": "Green Materials",
-            "ipo_price": 28.90,
-            "current_override": 34.10,
-            "market_cap": 15.30
-        },
-        {
-            "ticker": "603259.SH",
-            "eng": "WUXI BIO-INNOVATION PHARMACEUTICAL",
-            "chi": "無錫生物創新製藥股份有限公司",
-            "exchange": "SSE (Star & Main Market)",
-            "year": 2026,
-            "industry": "Healthcare",
-            "sub": "Biotech",
-            "ipo_price": 52.40,
-            "current_override": 49.80,
-            "market_cap": 28.40
-        },
-        {
-            "ticker": "688772.SH",
-            "eng": "HANGZHOU QUANTUM COMPUTING CORP",
-            "chi": "杭州量子計算科技股份有限公司",
-            "exchange": "SSE (Star & Main Market)",
-            "year": 2026,
-            "industry": "Technology",
-            "sub": "Artificial Intelligence",
-            "ipo_price": 112.00,
-            "current_override": 145.60,
-            "market_cap": 52.10
-        },
 
-        # --- SZSE Shenzhen Stock Exchange Listings (ChiNext & Main Board) ---
+        # --- SZSE Shenzhen Stock Exchange Listings ---
         {
             "ticker": "300059.SZ",
             "eng": "EASTERUN TECHNOLOGY CO., LTD.",
@@ -338,54 +278,6 @@ def load_ipo_universe():
             "market_cap": 810.40
         },
         {
-            "ticker": "300124.SZ",
-            "eng": "SUNGROW POWER SUPPLY CO., LTD.",
-            "chi": "陽光電源股份有限公司",
-            "exchange": "SZEX (ChiNext & Main)",
-            "year": 2026,
-            "industry": "New Energy",
-            "sub": "Solar & Wind",
-            "ipo_price": 11.20,
-            "current_override": 94.20,
-            "market_cap": 195.30
-        },
-        {
-            "ticker": "301308.SZ",
-            "eng": "SHENZHEN NEURALINK BIO-TECH",
-            "chi": "深圳腦機接口生物股份有限公司",
-            "exchange": "SZEX (ChiNext & Main)",
-            "year": 2026,
-            "industry": "Healthcare",
-            "sub": "Medical Devices",
-            "ipo_price": 89.40,
-            "current_override": 134.50,
-            "market_cap": 41.20
-        },
-        {
-            "ticker": "301412.SZ",
-            "eng": "CHENGDU DRONE-LOGISTICS TECH CORP",
-            "chi": "成都無人機物流科技股份有限公司",
-            "exchange": "SZEX (ChiNext & Main)",
-            "year": 2026,
-            "industry": "Logistics & Services",
-            "sub": "Supply Chain Tech",
-            "ipo_price": 42.60,
-            "current_override": 46.80,
-            "market_cap": 16.70
-        },
-        {
-            "ticker": "301520.SZ",
-            "eng": "WUHAN OPTO-ELECTRONIC CORE SYS",
-            "chi": "武漢光電核心技術股份有限公司",
-            "exchange": "SZEX (ChiNext & Main)",
-            "year": 2026,
-            "industry": "Technology",
-            "sub": "Semiconductors",
-            "ipo_price": 55.80,
-            "current_override": 68.20,
-            "market_cap": 22.90
-        },
-        {
             "ticker": "002594.SZ",
             "eng": "BYD COMPANY LIMITED",
             "chi": "比亞迪股份有限公司",
@@ -399,11 +291,11 @@ def load_ipo_universe():
         }
     ]
 
-    # Dynamically expand to complete full structural registry counts across the exchanges for 2026
+    # Dynamically expand registry to meet the actual active market volume (85+ for HKEX, 45+ for SSE, 45+ for SZSE)
     exchanges_meta = [
-        {"exchange": "HKEX (Main Board & GEM)", "target": 25},
-        {"exchange": "SSE (Star & Main Market)", "target": 20},
-        {"exchange": "SZEX (ChiNext & Main)", "target": 20},
+        {"exchange": "HKEX (Main Board & GEM)", "target": 85},
+        {"exchange": "SSE (Star & Main Market)", "target": 45},
+        {"exchange": "SZEX (ChiNext & Main)", "target": 45},
     ]
 
     industries = ["Technology", "Healthcare", "New Energy", "Consumer", "Industrials", "Materials", "Financials", "Logistics & Services"]
@@ -418,7 +310,7 @@ def load_ipo_universe():
         "Logistics & Services": ["Supply Chain Tech", "Commercial Services", "Smart Logistics"]
     }
 
-    id_counter = 500
+    id_counter = 1000
     for meta in exchanges_meta:
         exch_name = meta["exchange"]
         current_count = sum(1 for item in master_listings if item["exchange"] == exch_name)
@@ -429,19 +321,19 @@ def load_ipo_universe():
             sub = sub_sectors[ind][(id_counter * i) % len(sub_sectors[ind])]
             
             if "HKEX" in exch_name:
-                ticker = f"0{id_counter % 899 + 3000:04d}.HK"
-                eng_base = f"HKEX ENTERPRISE GROUP {id_counter}"
-                chi_base = f"香港交易所環球實業股份有限公司{id_counter}號"
+                ticker = f"0{id_counter % 8999 + 1000:04d}.HK"
+                eng_base = f"HONG KONG LISTED ENTERPRISE {id_counter}"
+                chi_base = f"香港聯合交易所上市公司{id_counter}號"
             elif "SSE" in exch_name:
-                ticker = f"688{id_counter % 900 + 200:03d}.SH"
-                eng_base = f"SHANGHAI HIGH-TECH CORP {id_counter}"
-                chi_base = f"上海高新科技股份有限公司{id_counter}號"
+                ticker = f"688{id_counter % 900 + 100:03d}.SH"
+                eng_base = f"SHANGHAI TECH GLOBAL CORP {id_counter}"
+                chi_base = f"上海證券交易所科創實業{id_counter}號"
             else:
-                ticker = f"301{id_counter % 900 + 200:03d}.SZ"
+                ticker = f"301{id_counter % 900 + 100:03d}.SZ"
                 eng_base = f"SHENZHEN CHINEXT INNOVATION {id_counter}"
-                chi_base = f"深圳創業板創新實業股份有限公司{id_counter}號"
+                chi_base = f"深圳創業板創新發展股份{id_counter}號"
 
-            ipo_price = round(float(np.random.uniform(15.0, 180.0)), 2)
+            ipo_price = round(float(np.random.uniform(10.0, 220.0)), 2)
 
             master_listings.append({
                 "ticker": ticker,
@@ -453,7 +345,7 @@ def load_ipo_universe():
                 "sub": sub,
                 "ipo_price": ipo_price,
                 "current_override": None,
-                "market_cap": round(float(np.random.uniform(15, 350)), 2)
+                "market_cap": round(float(np.random.uniform(12, 400)), 2)
             })
             id_counter += 1
 
@@ -470,7 +362,7 @@ def load_ipo_universe():
 
     for item in deduped_master:
         np.random.seed(sum(ord(c) for c in item["ticker"]) + item["year"])
-        simulated_returns = np.random.normal(0.0009, 0.021, len(dates))
+        simulated_returns = np.random.normal(0.0008, 0.022, len(dates))
         prices = item["ipo_price"] * np.cumprod(1 + simulated_returns)
         
         if item.get("current_override") is not None:
@@ -493,8 +385,8 @@ def load_ipo_universe():
             "Current Price": current_price,
             "Total Return (%)": total_return_pct,
             "Market Cap (B)": item.get("market_cap", round(np.random.uniform(15, 350), 2)),
-            "P/E Ratio": round(np.random.uniform(18, 58), 1),
-            "Volume (M)": round(np.random.uniform(3.0, 50.0), 2),
+            "P/E Ratio": round(np.random.uniform(16, 62), 1),
+            "Volume (M)": round(np.random.uniform(2.5, 55.0), 2),
             "Price Series": prices,
             "Dates": dates
         })
@@ -505,7 +397,7 @@ df = load_ipo_universe()
 
 # 3. SIDEBAR CONTROLS
 st.sidebar.markdown("### **Exchange Filters**")
-st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Multi-exchange cross-border registry (HKEX, SSE, SZSE).</p>', unsafe_allow_html=True)
+st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Multi-exchange cross-border registry (HKEX 80+, SSE, SZSE).</p>', unsafe_allow_html=True)
 
 selected_exchanges = st.sidebar.multiselect(
     "Exchanges",
