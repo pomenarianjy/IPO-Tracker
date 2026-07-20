@@ -11,26 +11,41 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom Styling
+# Custom Styling (Enhanced Typography & Layout Polish)
 st.markdown("""
     <style>
     .main-title {
-        font-size: 2.4rem;
+        font-size: 3rem;
         color: #1E3A8A;
-        font-weight: 700;
-        margin-bottom: 0px;
+        font-weight: 800;
+        margin-bottom: 2px;
+        letter-spacing: -0.5px;
     }
     .sub-title {
-        font-size: 1.05rem;
+        font-size: 1.2rem;
         color: #4B5563;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        font-weight: 400;
+    }
+    .section-title {
+        font-size: 1.6rem;
+        color: #1F2937;
+        font-weight: 700;
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
+    .card-title {
+        font-size: 1.3rem;
+        color: #1E3A8A;
+        font-weight: 700;
+        margin-bottom: 12px;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # --- HEADER SECTION ---
 st.markdown('<p class="main-title">🌸 Jasmine’s HKEX IPO Tracker</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Tracking all Hong Kong Stock Exchange YTD listings with real-time Yahoo Finance data.</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Comprehensive real-time tracking dashboard for Hong Kong Stock Exchange year-to-date listings.</p>', unsafe_allow_html=True)
 
 # --- LOAD DATA FROM ipo_data.py ---
 @st.cache_data
@@ -45,37 +60,12 @@ if df_ipo.empty:
     st.error("No stock data returned from `ipo_data.load_verified_hk_ipos()`.")
     st.stop()
 
-# --- SIDEBAR SCREENING OPTIONS ---
-st.sidebar.markdown("## 🔍 Market Filters & Screening")
-industries = ["All Industries"] + list(df_ipo["Industry"].dropna().unique())
-selected_industry = st.sidebar.selectbox("Filter by Industry", industries)
-
-if selected_industry != "All Industries":
-    filtered_df = df_ipo[df_ipo["Industry"] == selected_industry]
-else:
-    filtered_df = df_ipo
-
-subsectors = ["All Sub-Sectors"] + list(filtered_df["Sub-Sector"].dropna().unique())
-selected_subsector = st.sidebar.selectbox("Filter by Sub-Sector", subsectors)
-
-if selected_subsector != "All Sub-Sectors":
-    filtered_df = filtered_df[filtered_df["Sub-Sector"] == selected_subsector]
-
-search_query = st.sidebar.text_input("Search Ticker, English or Chinese Name", "").lower()
-if search_query:
-    filtered_df = filtered_df[
-        filtered_df['English Name'].str.lower().str.contains(search_query, na=False) |
-        filtered_df['Chinese Name'].str.contains(search_query, na=False) |
-        filtered_df['Ticker'].str.lower().str.contains(search_query, na=False) |
-        filtered_df['CleanTicker'].str.lower().str.contains(search_query, na=False)
-    ]
-
 # --- MAIN MENU SECTION ---
-st.markdown("### 📋 HKEX Newly Listed Companies Full Menu")
-st.markdown(f"Displaying **{len(filtered_df)}** matching companies from your database.")
+st.markdown('<p class="section-title">📋 HKEX Newly Listed Companies Full Menu</p>', unsafe_allow_html=True)
+st.markdown(f"Displaying **{len(df_ipo)}** verified newly listed companies from your database.")
 
 # Menu columns display mapping
-menu_display = filtered_df[['CleanTicker', 'English Name', 'Chinese Name', 'Industry', 'Sub-Sector', 'Exchange', 'Listing Date', 'Offering Price']].copy()
+menu_display = df_ipo[['CleanTicker', 'English Name', 'Chinese Name', 'Industry', 'Sub-Sector', 'Exchange', 'Listing Date', 'Offering Price']].copy()
 column_rename_map = {
     "CleanTicker": "Ticker Code", 
     "English Name": "English Name", 
@@ -91,9 +81,9 @@ st.dataframe(menu_display, use_container_width=True, hide_index=True)
 
 # Selection configuration
 selected_code = st.selectbox(
-    "Select a specific company to inspect live charts & metrics on the right panel:",
-    options=filtered_df['CleanTicker'].tolist(),
-    format_func=lambda x: f"{x} - {filtered_df[filtered_df['CleanTicker']==x]['English Name'].values[0]} ({filtered_df[filtered_df['CleanTicker']==x]['Chinese Name'].values[0]})"
+    "Select a specific company to inspect live charts & metrics on the panel below:",
+    options=df_ipo['CleanTicker'].tolist(),
+    format_func=lambda x: f"{x} - {df_ipo[df_ipo['CleanTicker']==x]['English Name'].values[0]} ({df_ipo[df_ipo['CleanTicker']==x]['Chinese Name'].values[0]})"
 )
 
 target_row = df_ipo[df_ipo['CleanTicker'] == selected_code].iloc[0]
@@ -116,7 +106,7 @@ st.markdown("---")
 col_left, col_right = st.columns([1.1, 1.9])
 
 with col_left:
-    st.markdown("#### 🏢 Company Profile")
+    st.markdown('<p class="card-title">🏢 Company Profile</p>', unsafe_allow_html=True)
     st.markdown(f"**English Name:** {target_row['English Name']}")
     st.markdown(f"**Chinese Name:** {target_row['Chinese Name']}")
     st.markdown(f"**Ticker Symbol:** `{target_row['Ticker']}`")
@@ -126,7 +116,7 @@ with col_left:
     st.markdown(f"**Offering Price:** {target_row['Offering Price']}")
     
     st.markdown("---")
-    st.markdown("#### 📊 Trading Statistics & Crucial Info")
+    st.markdown('<p class="card-title">📊 Trading Statistics & Crucial Info</p>', unsafe_allow_html=True)
     
     if not hist_data.empty:
         current_price = hist_data['Close'].iloc[-1]
@@ -150,13 +140,13 @@ with col_left:
         st.info("Note: Live feed currently rate-limited by provider. Showing verified static reference records.")
 
 with col_right:
-    st.markdown("#### 📈 Stock Performance Chart (Day-to-Day Changes)")
+    st.markdown('<p class="card-title">📈 Stock Performance Chart (Day-to-Day Changes)</p>', unsafe_allow_html=True)
     if not hist_data.empty:
         st.line_chart(hist_data['Close'], height=310)
     else:
         st.warning("Historical price data is temporarily rate-limited or updating from the market feed. Please check back shortly.")
 
-    st.markdown("#### 🔗 Comparable Companies from Universe")
+    st.markdown('<p class="card-title">🔗 Comparable Companies from Universe</p>', unsafe_allow_html=True)
     peers = df_ipo[(df_ipo['Industry'] == target_row['Industry']) & (df_ipo['CleanTicker'] != target_row['CleanTicker'])]
     if not peers.empty:
         peer_sample = peers.head(4)[['CleanTicker', 'English Name', 'Chinese Name', 'Sub-Sector']]
@@ -167,13 +157,12 @@ with col_right:
 
 # --- BOTTOM SECTION: TOP PERFORMING STOCKS YTD (RATE-LIMIT SAFE) ---
 st.markdown("---")
-st.markdown("### 🏆 Top Performing IPO Stocks Year-to-Date")
+st.markdown('<p class="section-title">🏆 Top Performing IPO Stocks Year-to-Date</p>', unsafe_allow_html=True)
 
 @st.cache_data(ttl=1800)
 def compute_ytd_leaderboard(df):
     results = []
-    # Sample subset or check safely to prevent hitting YFRateLimitError
-    sample_df = df.head(20) # Scans top 20 efficiently without flooding API limits
+    sample_df = df.head(20)  # Scans top 20 efficiently without flooding API limits
     for _, row in sample_df.iterrows():
         try:
             t_obj = yf.Ticker(row['Ticker'])
@@ -205,4 +194,4 @@ else:
 
 # --- FOOTER ---
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #6B7280;'>Jasmine’s HKEX IPO Tracking Platform • Powered by Streamlit & Yahoo Finance API</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #6B7280; font-size: 0.95rem;'>Jasmine’s HKEX IPO Tracking Platform • Powered by Streamlit & Yahoo Finance API</p>", unsafe_allow_html=True)
