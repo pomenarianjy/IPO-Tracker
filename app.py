@@ -82,11 +82,11 @@ APPLE_CSS = """
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
 
-# 2. Comprehensive Multi-Year Robust Dataset Generator (2020-2026)
+# 2. Comprehensive Multi-Sector Dataset Generator (2024-2026)
 @st.cache_data
 def load_ipo_universe():
     master_listings = [
-        # 2026 Listings
+        # --- 2026 Listings ---
         {
             "ticker": "02249.HK",
             "eng": "Nexchip Semiconductor",
@@ -103,8 +103,8 @@ def load_ipo_universe():
             "chi": "立讯精密",
             "exchange": "HKEX (Main Board)",
             "year": 2026,
-            "industry": "Technology",
-            "sub": "EV & Components",
+            "industry": "Industrials",
+            "sub": "Precision Components",
             "ipo_price": 63.28,
         },
         {
@@ -124,8 +124,48 @@ def load_ipo_universe():
             "exchange": "HKEX (Main Board)",
             "year": 2026,
             "industry": "Technology",
-            "sub": "Artificial Intelligence",
+            "sub": "Autonomous Driving AI",
             "ipo_price": 295.60,
+        },
+        {
+            "ticker": "06745.HK",
+            "eng": "Befar Group Co., Ltd",
+            "chi": "滨化集团",
+            "exchange": "HKEX (Main Board)",
+            "year": 2026,
+            "industry": "Materials",
+            "sub": "Specialty Chemicals",
+            "ipo_price": 3.48,
+        },
+        {
+            "ticker": "02797.HK",
+            "eng": "Jiangxi Qiyunshan Food",
+            "chi": "齐云山食品",
+            "exchange": "HKEX (Main Board)",
+            "year": 2026,
+            "industry": "Consumer",
+            "sub": "Food & Beverage",
+            "ipo_price": 8.00,
+        },
+        {
+            "ticker": "01770.HK",
+            "eng": "DKE Holding Company",
+            "chi": "大科控股",
+            "exchange": "HKEX (Main Board)",
+            "year": 2026,
+            "industry": "Financials",
+            "sub": "Investment Holding",
+            "ipo_price": 78.64,
+        },
+        {
+            "ticker": "00537.HK",
+            "eng": "Rigol Technologies",
+            "chi": "普源精电",
+            "exchange": "HKEX (Main Board)",
+            "year": 2026,
+            "industry": "Industrials",
+            "sub": "Electronic Test Instruments",
+            "ipo_price": 45.98,
         },
         {
             "ticker": "301400.SZ",
@@ -143,11 +183,52 @@ def load_ipo_universe():
             "chi": "苏州纳米核心",
             "exchange": "SSE (Star Market)",
             "year": 2026,
-            "industry": "Technology",
-            "sub": "Semiconductors",
+            "industry": "Healthcare",
+            "sub": "Biotech & Nanotech",
             "ipo_price": 51.20,
         },
-        # 2025 Listings
+        {
+            "ticker": "02667.HK",
+            "eng": "Beijing Tong Ren Tang Healthcare",
+            "chi": "同仁堂医疗",
+            "exchange": "HKEX (Main Board)",
+            "year": 2026,
+            "industry": "Healthcare",
+            "sub": "Traditional & Modern Pharma",
+            "ipo_price": 5.50,
+        },
+        {
+            "ticker": "00668.HK",
+            "eng": "Anker Innovations Technology",
+            "chi": "安克创新",
+            "exchange": "HKEX (Main Board)",
+            "year": 2026,
+            "industry": "Consumer",
+            "sub": "Smart Hardware",
+            "ipo_price": 99.32,
+        },
+        {
+            "ticker": "06915.HK",
+            "eng": "Jiangxi Institute of Biological Products",
+            "chi": "江西生物制品",
+            "exchange": "HKEX (Main Board)",
+            "year": 2026,
+            "industry": "Healthcare",
+            "sub": "Biologics & Vaccines",
+            "ipo_price": 11.20,
+        },
+        {
+            "ticker": "03952.HK",
+            "eng": "Zhejiang Laifual Drive",
+            "chi": "来福谐波",
+            "exchange": "HKEX (Main Board)",
+            "year": 2026,
+            "industry": "Industrials",
+            "sub": "Robotics Components",
+            "ipo_price": 85.50,
+        },
+
+        # --- 2025 Listings ---
         {
             "ticker": "03700.HK",
             "eng": "Contemporary Amperex Technology",
@@ -175,7 +256,7 @@ def load_ipo_universe():
             "exchange": "SSE (Star Market)",
             "year": 2025,
             "industry": "Healthcare",
-            "sub": "Biotech",
+            "sub": "Innovative Pharma",
             "ipo_price": 45.30,
         },
         {
@@ -185,7 +266,7 @@ def load_ipo_universe():
             "exchange": "HKEX (Main Board)",
             "year": 2025,
             "industry": "Technology",
-            "sub": "Artificial Intelligence",
+            "sub": "Autonomous Driving",
             "ipo_price": 38.40,
         },
         {
@@ -198,7 +279,98 @@ def load_ipo_universe():
             "sub": "Digital Health",
             "ipo_price": 19.80,
         },
-        # 2024 Listings
+        {
+            "ticker": "02199.HK",
+            "eng": "Zijin Gold International",
+            "chi": "紫金黄金国际",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "Materials",
+            "sub": "Mining & Metals",
+            "ipo_price": 44.20,
+        },
+        {
+            "ticker": "01810.HK",
+            "eng": "Sany Heavy Industry",
+            "chi": "三一重工",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "Industrials",
+            "sub": "Heavy Machinery",
+            "ipo_price": 18.50,
+        },
+        {
+            "ticker": "01428.HK",
+            "eng": "Zhejiang Sanhua Intelligent",
+            "chi": "三花智控",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "Industrials",
+            "sub": "Thermal Management",
+            "ipo_price": 26.40,
+        },
+        {
+            "ticker": "02319.HK",
+            "eng": "Foshan Haitian Flavouring",
+            "chi": "海天味业",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "Consumer",
+            "sub": "Food & Beverage",
+            "ipo_price": 48.90,
+        },
+        {
+            "ticker": "09860.HK",
+            "eng": "WeRide Inc.",
+            "chi": "文远知行",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "Technology",
+            "sub": "Autonomous Driving",
+            "ipo_price": 52.00,
+        },
+        {
+            "ticker": "01688.HK",
+            "eng": "Chery Automobile Co Ltd",
+            "chi": "奇瑞汽车",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "New Energy",
+            "sub": "Automotive",
+            "ipo_price": 31.00,
+        },
+        {
+            "ticker": "09988.HK",
+            "eng": "Mirxes Holding Company",
+            "chi": "觅瑞",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "Healthcare",
+            "sub": "Cancer Diagnostics",
+            "ipo_price": 22.50,
+        },
+        {
+            "ticker": "02588.HK",
+            "eng": "IFBH Limited",
+            "chi": "IFBH",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "Consumer",
+            "sub": "Beverages & Agri",
+            "ipo_price": 11.40,
+        },
+        {
+            "ticker": "01999.HK",
+            "eng": "Nanshan Aluminium International",
+            "chi": "南山铝业国际",
+            "exchange": "HKEX (Main Board)",
+            "year": 2025,
+            "industry": "Materials",
+            "sub": "Aluminum Products",
+            "ipo_price": 15.80,
+        },
+
+        # --- 2024 Listings ---
         {
             "ticker": "02511.HK",
             "eng": "Horizon Robotics",
@@ -216,7 +388,7 @@ def load_ipo_universe():
             "exchange": "HKEX (Main Board)",
             "year": 2024,
             "industry": "Technology",
-            "sub": "Artificial Intelligence",
+            "sub": "Autonomous Chips",
             "ipo_price": 28.00,
         },
         {
@@ -226,92 +398,58 @@ def load_ipo_universe():
             "exchange": "SSE (Star Market)",
             "year": 2024,
             "industry": "New Energy",
-            "sub": "Solar & Wind",
+            "sub": "Solar & Aerospace",
             "ipo_price": 42.10,
         },
-        # 2023 Listings
         {
-            "ticker": "02488.HK",
-            "eng": "J&T Global Express",
-            "chi": "极兔速递",
+            "ticker": "02500.HK",
+            "eng": "Rici Healthcare Group",
+            "chi": "瑞慈医疗",
             "exchange": "HKEX (Main Board)",
-            "year": 2023,
-            "industry": "Consumer",
-            "sub": "E-Commerce",
-            "ipo_price": 12.00,
-        },
-        {
-            "ticker": "301358.SZ",
-            "eng": "Henan New Energy Power",
-            "chi": "河南新能源电力",
-            "exchange": "SZEX (ChiNext)",
-            "year": 2023,
-            "industry": "New Energy",
-            "sub": "Battery Tech",
-            "ipo_price": 16.50,
-        },
-        # 2022 Listings
-        {
-            "ticker": "688041.SH",
-            "eng": "Hygon Information Technology",
-            "chi": "海光信息",
-            "exchange": "SSE (Star Market)",
-            "year": 2022,
-            "industry": "Technology",
-            "sub": "Semiconductors",
-            "ipo_price": 36.45,
-        },
-        {
-            "ticker": "301269.SZ",
-            "eng": "United Imaging Healthcare",
-            "chi": "联影医疗",
-            "exchange": "SZEX (ChiNext)",
-            "year": 2022,
+            "year": 2024,
             "industry": "Healthcare",
-            "sub": "Medical Devices",
-            "ipo_price": 109.88,
+            "sub": "Medical Services",
+            "ipo_price": 14.20,
         },
-        # 2021 Listings
         {
-            "ticker": "09888.HK",
-            "eng": "Baidu, Inc.",
-            "chi": "百度集团",
+            "ticker": "02451.HK",
+            "eng": "Shanghai ChicMax Cosmetic",
+            "chi": "上美股份",
             "exchange": "HKEX (Main Board)",
-            "year": 2021,
-            "industry": "Technology",
-            "sub": "Artificial Intelligence",
-            "ipo_price": 252.00,
-        },
-        {
-            "ticker": "02015.HK",
-            "eng": "Li Auto Inc.",
-            "chi": "理想汽车",
-            "exchange": "HKEX (Main Board)",
-            "year": 2021,
-            "industry": "New Energy",
-            "sub": "EV & Components",
-            "ipo_price": 118.00,
-        },
-        # 2020 Listings
-        {
-            "ticker": "688981.SH",
-            "eng": "Semiconductor Manufacturing Int.",
-            "chi": "中芯国际",
-            "exchange": "SSE (Star Market)",
-            "year": 2020,
-            "industry": "Technology",
-            "sub": "Semiconductors",
-            "ipo_price": 27.46,
-        },
-        {
-            "ticker": "09618.HK",
-            "eng": "JD.com, Inc.",
-            "chi": "京东集团",
-            "exchange": "HKEX (Main Board)",
-            "year": 2020,
+            "year": 2024,
             "industry": "Consumer",
-            "sub": "E-Commerce",
-            "ipo_price": 226.00,
+            "sub": "Beauty & Personal Care",
+            "ipo_price": 25.20,
+        },
+        {
+            "ticker": "02459.HK",
+            "eng": "Keeping Ltd",
+            "chi": "卡淘科技",
+            "exchange": "HKEX (Main Board)",
+            "year": 2024,
+            "industry": "Consumer",
+            "sub": "Digital E-Commerce",
+            "ipo_price": 10.50,
+        },
+        {
+            "ticker": "09898.HK",
+            "eng": "Mobvoi Inc.",
+            "chi": "出门问问",
+            "exchange": "HKEX (Main Board)",
+            "year": 2024,
+            "industry": "Technology",
+            "sub": "Conversational AI",
+            "ipo_price": 3.80,
+        },
+        {
+            "ticker": "02555.HK",
+            "eng": "Jingdong Property",
+            "chi": "京东产发",
+            "exchange": "HKEX (Main Board)",
+            "year": 2024,
+            "industry": "Real Estate",
+            "sub": "Logistics Real Estate",
+            "ipo_price": 18.30,
         },
     ]
 
@@ -320,7 +458,7 @@ def load_ipo_universe():
 
     for item in master_listings:
         np.random.seed(sum(ord(c) for c in item["ticker"]))
-        simulated_returns = np.random.normal(0.0007, 0.02, len(dates))
+        simulated_returns = np.random.normal(0.0008, 0.022, len(dates))
         prices = item["ipo_price"] * np.cumprod(1 + simulated_returns)
         current_price = round(float(prices[-1]), 2)
         total_return_pct = round(
@@ -339,9 +477,9 @@ def load_ipo_universe():
                 "IPO Price": item["ipo_price"],
                 "Current Price": current_price,
                 "Total Return (%)": total_return_pct,
-                "Market Cap (B)": round(np.random.uniform(25, 400), 2),
-                "P/E Ratio": round(np.random.uniform(15, 65), 1),
-                "Volume (M)": round(np.random.uniform(2.5, 45.0), 2),
+                "Market Cap (B)": round(np.random.uniform(15, 350), 2),
+                "P/E Ratio": round(np.random.uniform(12, 58), 1),
+                "Volume (M)": round(np.random.uniform(1.5, 40.0), 2),
                 "Price Series": prices,
                 "Dates": dates,
             }
@@ -355,14 +493,14 @@ df = load_ipo_universe()
 # 3. Header Section
 st.markdown('<p class="hero-title">Jasmine’s IPO Intelligence</p>', unsafe_allow_html=True)
 st.markdown(
-    '<p class="hero-subtitle">Comprehensive tracking, screening, and deep valuation analytics across Hong Kong and Mainland China exchanges (2020–2026).</p>',
+    '<p class="hero-subtitle">Comprehensive multi-sector tracking across HKEX and Mainland China exchanges (2024–2026).</p>',
     unsafe_allow_html=True,
 )
 
-# 4. Sidebar Screening Configuration
+# 4. Sidebar Screening Configuration (Restricted strictly to 2024-2026)
 st.sidebar.markdown("### **Filters & Controls**")
 st.sidebar.markdown(
-    '<p style="font-size:12px; color:#86868B;">Refine the company universe instantly.</p>',
+    '<p style="font-size:12px; color:#86868B;">Filtered for 2024–2026 IPO cohort.</p>',
     unsafe_allow_html=True,
 )
 
@@ -374,12 +512,12 @@ selected_exchanges = st.sidebar.multiselect(
 
 selected_years = st.sidebar.multiselect(
     "Listing Year",
-    options=[2026, 2025, 2024, 2023, 2022, 2021, 2020],
-    default=[2026, 2025, 2024, 2023, 2022, 2021, 2020],
+    options=[2026, 2025, 2024],
+    default=[2026, 2025, 2024],
 )
 
 selected_industries = st.sidebar.multiselect(
-    "Industry",
+    "Industry Sector",
     options=df["Industry"].unique().tolist(),
     default=df["Industry"].unique().tolist(),
 )
@@ -416,7 +554,13 @@ with col_left:
     ]
 
     menu_table = display_df[
-        ["Ticker", "English Name", "Chinese Name", "Exchange", "Total Return (%)"]
+        [
+            "Ticker",
+            "English Name",
+            "Industry",
+            "Listing Year",
+            "Total Return (%)",
+        ]
     ].reset_index(drop=True)
 
     if not display_df.empty:
@@ -443,7 +587,7 @@ with col_right:
             f"""
             <div class="apple-card">
                 <h2 style="margin:0; font-size:24px;">{stock_info['English Name']} <span style="color:#86868B; font-weight:400;">{stock_info['Chinese Name']}</span></h2>
-                <p style="margin:4px 0 16px 0; font-size:14px; color:#0066CC; font-weight:500;">{stock_info['Ticker']} &bull; {stock_info['Exchange']} &bull; Listed {stock_info['Listing Year']} ({stock_info['Sub-Sector']})</p>
+                <p style="margin:4px 0 16px 0; font-size:14px; color:#0066CC; font-weight:500;">{stock_info['Ticker']} &bull; {stock_info['Exchange']} &bull; Listed {stock_info['Listing Year']} ({stock_info['Industry']} / {stock_info['Sub-Sector']})</p>
                 <div style="display: flex; gap: 40px;">
                     <div>
                         <span class="metric-label">Current Price</span><br>
@@ -503,7 +647,7 @@ with col_right:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        st.markdown("#### **Comparable Universe Peers**")
+        st.markdown("#### **Comparable Sector Peers**")
         peers = df[
             (df["Industry"] == stock_info["Industry"])
             & (df["Ticker"] != stock_info["Ticker"])
@@ -524,7 +668,7 @@ with col_right:
 
 # 6. Global & Exchange-Specific Top Performers Section
 st.markdown("---")
-st.markdown("### **Top Performing IPOs**")
+st.markdown("### **Top Performing IPOs (2024-2026 Cohort)**")
 
 col_top1, col_top2, col_top3, col_top4 = st.columns(4)
 
