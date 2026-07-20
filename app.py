@@ -11,6 +11,16 @@ st.set_page_config(
     layout="wide"
 )
 
+# Custom CSS to significantly shrink the font size for the 4th metric card (Est. Market Cap) so the full number fits
+st.markdown("""
+    <style>
+    div[data-testid="metric-container"]:nth-of-type(4) div[data-testid="stMetricValue"] {
+        font-size: 0.95rem !important;
+        white-space: nowrap !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Load and Combine Data from Both Modules
 @st.cache_data
 def get_combined_ipo_data():
@@ -77,14 +87,16 @@ if selected_stock_str != "Overview Mode":
     # Calculate performance metrics
     latest_price = simulated_prices[-1]
     perf_pct = ((latest_price - base_price) / base_price) * 100
-    market_cap_value = latest_price * 201000000; # Adjusted scale for millions
+    market_cap_value = latest_price * 2010000000 # Full exact market cap calculation
     
-    # Display Key Statistics Cards with explicit Million unit label included in the title
+    market_cap_str = f"HKD {market_cap_value:,.2f}"
+    
+    # Display Key Statistics Cards
     m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("Latest Price", f"HKD {latest_price:.2f}", f"{perf_pct:+.2f}%")
     m2.metric("Offering Price", stock_info["Offering Price"])
     m3.metric("Currency", "HKD")
-    m4.metric("Est. Market Cap (Million)", f"HKD {market_cap_value:,.2f}")
+    m4.metric("Est. Market Cap", market_cap_str)
     m5.metric("Exchange Board", stock_info["Exchange"])
     
     st.markdown("### Day-to-Day Price Trend Since Listing")
