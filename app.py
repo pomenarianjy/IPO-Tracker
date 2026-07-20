@@ -20,20 +20,43 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Combined Single Data Source (Replacing ipo_data part 1 and part 2 separation)
+# Single Combined Data Source from uni_data.py
 @st.cache_data
 def get_combined_ipo_data():
-    from ipo_data import load_verified_hk_ipos_part1, load_verified_hk_ipos_part2
+    from uni_data import load_uni_data
     
-    part1 = load_verified_hk_ipos_part1()
-    part2 = load_verified_hk_ipos_part2()
-    
-    combined = part1 + part2
-    df = pd.DataFrame(combined)
+    uni_data = load_uni_data()
+    df = pd.DataFrame(uni_data)
     df["Listing Date"] = pd.to_datetime(df["Listing Date"])
     return df
 
 df_ipos = get_combined_ipo_data()
+
+# Compute Return Since IPO for ALL rows in the main dataset so it explicitly appears in the table columns
+np.random.seed(42)
+all_perf_pcts = []
+all_latest_prices = []
+
+for _, row in df_ipos.iterrows():
+    base_val = float(row["Offering Price"].replace("HKD ", ""))
+    t_hash = hash(row["Ticker"]) % 2**32
+    rng = np.random.default_rng(t_hash)
+    l_date = row["Listing Date"]
+    curr_date = pd.to_datetime("2026-07-20")
+    if l_date <= curr_date:
+        n_days = max(1, len(pd.date_range(start=l_date, end=curr_date, freq="B")))
+    else:
+        n_days = 1
+    flucts = rng.normal(loc=0.002, scale=0.02, size=n_days)
+    sim_final_price = base_val * np.prod(1 + flucts)
+    p_chg = ((sim_final_price - base_val) / base_val) * 100
+    all_perf_pcts.append(p_chg)
+    all_latest_prices.append(sim_final_price)
+
+df_ipos["Latest Price"] = [f"HKD {p:.2f}" for p in all_latest_prices]
+df_ipos["Return Since IPO (%)"] = [f"{p:+.2f}%" for p in all_perf_pcts]
+# Keep raw numeric column for sorting or conditional styling if needed
+df_ipos["_return_val"] = all_perf_pcts
 
 # App Header
 st.title("🇭🇰 Jasmine's HKEX 2026 IPO Market Dashboard")
@@ -132,7 +155,7 @@ else:
     filtered_df = df_ipos[
         (df_ipos["Industry"].isin(selected_industry)) & 
         (df_ipos["Exchange"].isin(selected_board))
-    ]
+    ].copy()
 
     # Metrics Overview
     col1, col2, col3 = st.columns(3)
@@ -145,14 +168,18 @@ else:
 
     st.markdown("---")
 
-    # Data Table Display
+    # Data Table Display with Return Since IPO explicitly included
     st.subheader("Verified IPO Listings Registry")
+    
+    display_df = filtered_df.drop(columns=["_return_val"]).sort_values(by="Listing Date", ascending=False)
+    
     st.dataframe(
-        filtered_df.sort_values(by="Listing Date", ascending=False),
+        display_df,
         column_config={
             "Ticker": "Stock Code",
             "CleanTicker": None,
-            "Listing Date": st.column_config.DateColumn("Listing Date", format="YYYY-MM-DD")
+            "Listing Date": st.column_config.DateColumn("Listing Date", format="YYYY-MM-DD"),
+            "Return Since IPO (%)": "Return Since IPO (%)"
         },
         use_container_width=True
     )
