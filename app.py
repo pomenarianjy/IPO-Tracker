@@ -9,7 +9,6 @@ st.set_page_config(
     page_title="Jasmine’s HK & China IPO Tracker",
     page_icon="",
     layout="wide",
-    initial_sidebar_state="expanded",
 )
 
 APPLE_CSS = """
@@ -25,10 +24,6 @@ APPLE_CSS = """
     .stApp {
         background-color: #FBFBFD;
     }
-
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
 
     .apple-card {
         background: #FFFFFF;
@@ -81,11 +76,6 @@ APPLE_CSS = """
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
-
-    [data-testid="stSidebar"] {
-        background-color: #F5F5F7;
-        border-right: 1px solid rgba(0, 0, 0, 0.05);
-    }
 </style>
 """
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
@@ -114,7 +104,6 @@ def load_ipo_universe():
 
     master_listings = []
     
-    # Real high-profile flagship entries with precise sector/sub-sector assignment and verified names
     flagships = [
         {
             "ticker": "02513.HK",
@@ -327,33 +316,40 @@ with header_col2:
 
 st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
 
-# 4. Sidebar Screening Configuration
-st.sidebar.markdown("### **Filters & Controls**")
-st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Full public exchange database (2024–2026).</p>', unsafe_allow_html=True)
+# 4. MAIN PAGE PERMANENT FILTER PANEL (Ensuring filters are always directly on screen and impossible to hide)
+st.markdown("### **Market Filters & Controls**")
+st.markdown('<p style="font-size:12px; color:#86868B; margin-top:-8px;">Full public exchange database screening (2024–2026).</p>', unsafe_allow_html=True)
 
-selected_exchanges = st.sidebar.multiselect(
-    "Stock Exchanges",
-    options=df["Exchange"].unique().tolist(),
-    default=df["Exchange"].unique().tolist()
-)
+filter_col1, filter_col2, filter_col3 = st.columns(3)
 
-selected_years = st.sidebar.multiselect(
-    "Listing Years",
-    options=[2026, 2025, 2024],
-    default=[2026, 2025, 2024]
-)
+with filter_col1:
+    selected_exchanges = st.multiselect(
+        "Stock Exchanges",
+        options=df["Exchange"].unique().tolist(),
+        default=df["Exchange"].unique().tolist()
+    )
 
-selected_industries = st.sidebar.multiselect(
-    "All Industry Sectors",
-    options=df["Industry"].unique().tolist(),
-    default=df["Industry"].unique().tolist()
-)
+with filter_col2:
+    selected_years = st.multiselect(
+        "Listing Years",
+        options=[2026, 2025, 2024],
+        default=[2026, 2025, 2024]
+    )
+
+with filter_col3:
+    selected_industries = st.multiselect(
+        "All Industry Sectors",
+        options=df["Industry"].unique().tolist(),
+        default=df["Industry"].unique().tolist()
+    )
 
 filtered_df = df[
     df["Exchange"].isin(selected_exchanges) &
     df["Listing Year"].isin(selected_years) &
     df["Industry"].isin(selected_industries)
 ]
+
+st.markdown("---")
 
 # 5. Main Content Layout: Split Panel
 col_left, col_right = st.columns([1.1, 1.4], gap="large")
@@ -383,7 +379,7 @@ with col_left:
         )
     else:
         selected_ticker = None
-        st.warning("No companies match your active filters. Please adjust the sidebar options.")
+        st.warning("No companies match your active filters. Please adjust the filter options above.")
 
     st.dataframe(menu_table, use_container_width=True, height=400)
 
