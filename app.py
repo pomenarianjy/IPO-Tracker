@@ -310,7 +310,6 @@ def load_ipo_data():
     dates = pd.date_range(end=datetime.date.today(), periods=500, freq="B")
 
     for s in stocks:
-        # Simulate realistic post-IPO price trajectory
         np.random.seed(len(s["ticker"]))
         returns = np.random.normal(0.0005, 0.02, len(dates))
         price_series = s["ipo_price"] * np.cumprod(1 + returns)
@@ -406,21 +405,17 @@ with col_left:
         )
     ]
 
-    # Menu table representation
     menu_table = display_df[
         ["Ticker", "English Name", "Chinese Name", "Exchange", "Total Return (%)"]
     ].reset_index(drop=True)
 
-    # Let user pick a ticker easily via selectbox populated from filtered view
     selected_ticker = st.selectbox(
         "Choose Company for Deep Dive",
         options=display_df["Ticker"].tolist(),
         format_func=lambda x: f"{x} - {display_df[display_df['Ticker'] == x]['English Name'].values[0]} ({display_df[display_df['Ticker'] == x]['Chinese Name'].values[0]})",
     )
 
-    st.dataframe(
-        menu_table, use_container_width=True, height: int = 400
-    )  # type: ignore
+    st.dataframe(menu_table, use_container_width=True, height=400)
 
 with col_right:
     st.markdown("### **Deep-Dive Analytics Panel**")
@@ -428,7 +423,6 @@ with col_right:
     if selected_ticker:
         stock_info = df[df["Ticker"] == selected_ticker].iloc[0]
 
-        # Top descriptive summary container
         st.markdown(
             f"""
             <div class="apple-card">
@@ -453,13 +447,11 @@ with col_right:
             unsafe_allow_html=True,
         )
 
-        # Yahoo Finance / Trusted Source Crucial Metrics layout
         m1, m2, m3 = st.columns(3)
-        m1.metric("Market Cap", f"${stock_info['Market Cap (BB)'] if 'Market Cap (BB)' in stock_info else stock_info['Market Cap (B)']}B")
+        m1.metric("Market Cap", f"${stock_info['Market Cap (B)']}B")
         m2.metric("P/E Ratio", f"{stock_info['P/E Ratio']}x")
         m3.metric("Daily Volume", f"{stock_info['Volume (M)']}M shares")
 
-        # Performance Chart (Plotly customized for Apple minimal aesthetic)
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
@@ -495,7 +487,6 @@ with col_right:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Comparable Companies from Universe
         st.markdown("#### **Comparable Universe Peers**")
         peers = df[
             (df["Industry"] == stock_info["Industry"])
