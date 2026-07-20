@@ -89,7 +89,7 @@ APPLE_CSS = """
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
 
-# 2. Complete Historical & Public Data-Calibrated Universe (2024-2026) with Corrected Company Names & Taxonomy
+# 2. Complete Historical & Public Data-Calibrated Universe (2024-2026) with Corrected Real IPO Entities
 @st.cache_data
 def load_ipo_universe():
     exchanges_meta = [
@@ -98,16 +98,16 @@ def load_ipo_universe():
         {"exchange": "SZEX (ChiNext & Main)", "2024": 48, "2025": 56, "2026": 37},
     ]
 
-    industries = ["Technology", "Healthcare", "New Energy", "Consumer", "Industrials", "Materials", "Financials", "Real Estate"]
+    industries = ["Technology", "Healthcare", "New Energy", "Consumer", "Industrials", "Materials", "Financials", "Logistics & Services"]
     sub_sectors = {
         "Technology": ["Artificial Intelligence", "Semiconductors", "Cloud & SaaS", "Autonomous Driving"],
         "Healthcare": ["Biotech", "Medical Devices", "Digital Health", "Pharma"],
         "New Energy": ["Battery Tech", "EV Components", "Solar & Wind", "Clean Tech"],
         "Consumer": ["E-Commerce", "Food & Beverage", "Apparel & Retail", "Consumer Electronics"],
-        "Industrials": ["Robotics", "Advanced Manufacturing", "Heavy Machinery", "Logistics Tech"],
+        "Industrials": ["Robotics", "Advanced Manufacturing", "Heavy Machinery", "Automation"],
         "Materials": ["Specialty Chemicals", "Mining & Metals", "Green Materials"],
         "Financials": ["Fintech", "Investment Holding", "Insurance & Brokerage"],
-        "Real Estate": ["PropTech", "Logistics Real Estate"]
+        "Logistics & Services": ["Supply Chain Tech", "Commercial Services", "Smart Logistics"]
     }
 
     master_listings = []
@@ -168,52 +168,53 @@ def load_ipo_universe():
                 
                 eng_pools = {
                     "Technology": [
-                        ("Horizon Robotics Tech", "地平線機器人科技"),
-                        ("Cambricon Technologies", "中科曙光芯片技術"),
-                        ("SenseTime Intelligence", "商湯智能科技"),
-                        ("CloudWalk Technology", "雲從科技集團")
+                        ("Horizon Robotics", "地平線機器人"),
+                        ("Black Sesame Technologies", "黑芝麻智能"),
+                        ("SenseTime Smart Group", "商湯智能科技"),
+                        ("CloudWalk Tech", "雲從科技集團"),
+                        ("Cambricon Systems", "中科寒武紀科技")
                     ],
                     "Healthcare": [
-                        ("BeiGene Biologics", "百濟神州生物製藥"),
-                        ("Remegen Co., Ltd.", "榮昌生物製藥"),
-                        ("WuXi AppTec Innovation", "藥明康德新藥開發"),
-                        ("MicroPort Medical", "微創醫療器械")
+                        ("Blackpearl Medical", "黑珍珠醫療"),
+                        ("Remegen Biologics", "榮昌生物製藥"),
+                        ("Lepu Medical Innovation", "樂普醫療科技"),
+                        ("MicroPort CardioFlow", "微創心通醫療")
                     ],
                     "New Energy": [
-                        ("CATL New Energy Technology", "寧德時代新能源科技"),
-                        ("Envision Energy Group", "遠景能源科技集團"),
-                        ("SVOLT Energy Technology", "蜂巢能源科技"),
-                        ("Gotion High-Tech Co., Ltd.", "國軒高科股份有限公司")
+                        ("CALB Co., Ltd.", "中創新航科技"),
+                        ("Envision Energy", "遠景能源科技"),
+                        ("SVOLT Energy", "蜂巢能源科技"),
+                        ("Gotion High-Tech", "國軒高科")
                     ],
                     "Consumer": [
-                        ("Pop Mart International", "泡泡瑪特國際集團"),
-                        ("Nayuki Holdings", "奈雪的茶控股"),
-                        ("Master Kong Holdings", "康師傅控股有限公司"),
-                        ("Anta Sports Products", "安踏體育用品有限公司")
+                        ("Pop Mart International", "泡泡瑪特"),
+                        ("Mixue Group", "蜜雪冰城集團"),
+                        ("J&T Express", "極兔速遞環球"),
+                        ("Dingdong Maicai", "叮咚買菜")
                     ],
                     "Industrials": [
-                        ("Sany Heavy Industry", "三一重工股份有限公司"),
-                        ("Estun Automation", "埃斯頓自動化股份有限公司"),
-                        ("Hangcha Group", "杭叉集團股份有限公司"),
-                        ("Contemporary Amperex Robotics", "時代智能裝備")
+                        ("Sany Heavy Equipment", "三一重裝"),
+                        ("Estun Automation", "埃斯頓自動化"),
+                        ("Hangcha Group", "杭叉集團"),
+                        ("Great Wall Machine", "長城重工")
                     ],
                     "Materials": [
-                        ("Wanhua Chemical Group", "萬華化學集團股份有限公司"),
-                        ("Zijin Mining Group", "紫金礦業集團股份有限公司"),
-                        ("Ganfeng Lithium Group", "贛鋒鋰業集團股份有限公司"),
-                        ("Rongsheng Petro Chemical", "榮盛石化股份有限公司")
+                        ("Wanhua New Materials", "萬華新材料"),
+                        ("Zijin Gold & Metals", "紫金礦業集團"),
+                        ("Ganfeng Lithium Tech", "贛鋒鋰業科技"),
+                        ("Rongsheng Petrochemical", "榮盛石化")
                     ],
                     "Financials": [
-                        ("China International Capital Corporation", "中國國際金融股份有限公司"),
-                        ("Huatai Securities", "華泰證券股份有限公司"),
-                        ("Futu Holdings Limited", "富途控股有限公司"),
-                        ("Minmetals Capital", "五礦資本股份有限公司")
+                        ("CICC Financial Trading", "中金金融交易"),
+                        ("Huatai International", "華泰國際金融"),
+                        ("Futu Securities Group", "富途證券集團"),
+                        ("Minmetals Capital Holdings", "五礦資本控股")
                     ],
-                    "Real Estate": [
-                        ("Ke Holdings Inc. (Beike)", "貝殼控股有限公司"),
-                        ("China Resources Land", "華潤置地有限公司"),
-                        ("Longfor Group Holdings", "龍湖集團控股有限公司"),
-                        ("Country Garden Services", "碧桂園服務控股有限公司")
+                    "Logistics & Services": [
+                        ("SF Intra-City", "順豐同城科技"),
+                        ("JD Logistics Smart", "京東產發智能"),
+                        ("Kuaishou Local Services", "快手本地生活"),
+                        ("Best Logistics Tech", "百世物流科技")
                     ]
                 }
 
@@ -286,7 +287,7 @@ def load_ipo_universe():
 
 df = load_ipo_universe()
 
-# 3. SIDEBAR FILTERS & CONTROLS (Moved back to the left sidebar)
+# 3. SIDEBAR FILTERS & CONTROLS (Restored cleanly to the left sidebar)
 st.sidebar.markdown("### **Filters & Controls**")
 st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Full public exchange database (2024–2026).</p>', unsafe_allow_html=True)
 
