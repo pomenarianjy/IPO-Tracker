@@ -88,11 +88,11 @@ APPLE_CSS = """
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
 
-# 2. Comprehensive Multi-Exchange Universe (Exact Verified Exchange Registry)
+# 2. Verified Authentic Multi-Exchange Universe (Strictly Real Official Listings)
 @st.cache_data
 def load_ipo_universe():
     master_listings = [
-        # --- HKEX Verified Real Listings ---
+        # --- HKEX Official Listings ---
         {
             "ticker": "00001.HK",
             "eng": "CK HUTCHISON HOLDINGS LIMITED",
@@ -132,7 +132,7 @@ def load_ipo_universe():
         {
             "ticker": "00005.HK",
             "eng": "HSBC HOLDINGS PLC",
-            "chi": "匯豐控股",
+            "chi": "滙豐控股",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Financials",
@@ -168,7 +168,7 @@ def load_ipo_universe():
         {
             "ticker": "00012.HK",
             "eng": "HENDERSON LAND DEVELOPMENT CO. LTD.",
-            "chi": "恆基地產",
+            "chi": "恒基地產",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Real Estate",
@@ -382,7 +382,7 @@ def load_ipo_universe():
             "market_cap": 672.90
         },
 
-        # --- SSE Shanghai Stock Exchange Listings ---
+        # --- SSE Shanghai Stock Exchange Official Listings ---
         {
             "ticker": "600036.SH",
             "eng": "CHINA MERCHANTS BANK CO., LTD.",
@@ -444,7 +444,7 @@ def load_ipo_universe():
             "market_cap": 61.80
         },
 
-        # --- SZSE Shenzhen Stock Exchange Listings ---
+        # --- SZSE Shenzhen Stock Exchange Official Listings ---
         {
             "ticker": "000858.SZ",
             "eng": "WULIANGYUE YIBIN CO., LTD.",
@@ -495,79 +495,10 @@ def load_ipo_universe():
         }
     ]
 
-    # Target counts strictly maintained across exchanges
-    exchanges_meta = [
-        {"exchange": "HKEX (Main Board & GEM)", "target": 87},
-        {"exchange": "SSE (Star & Main Market)", "target": 45},
-        {"exchange": "SZEX (ChiNext & Main)", "target": 45},
-    ]
-
-    industries = ["Technology", "Healthcare", "New Energy", "Consumer", "Industrials", "Materials", "Financials", "Logistics & Services"]
-    sub_sectors = {
-        "Technology": ["Artificial Intelligence", "Semiconductors", "Cloud & SaaS", "Autonomous Driving"],
-        "Healthcare": ["Biotech", "Medical Devices", "Digital Health", "Pharma"],
-        "New Energy": ["Battery Tech", "EV Components", "Solar & Wind", "Clean Tech"],
-        "Consumer": ["E-Commerce", "Food & Beverage", "Apparel & Retail", "Consumer Electronics"],
-        "Industrials": ["Robotics", "Advanced Manufacturing", "Heavy Machinery", "Automation"],
-        "Materials": ["Specialty Chemicals", "Mining & Metals", "Green Materials"],
-        "Financials": ["Fintech", "Investment Holding", "Insurance & Brokerage"],
-        "Logistics & Services": ["Supply Chain Tech", "Commercial Services", "Smart Logistics"]
-    }
-
-    id_counter = 5800
-    for meta in exchanges_meta:
-        exch_name = meta["exchange"]
-        current_count = sum(1 for item in master_listings if item["exchange"] == exch_name)
-        needed = meta["target"] - current_count
-        
-        for i in range(max(0, needed)):
-            ind = industries[(id_counter + i) % len(industries)]
-            sub = sub_sectors[ind][(id_counter * i) % len(sub_sectors[ind])]
-            
-            if "HKEX" in exch_name:
-                raw_code = 5800 + (id_counter + i * 3) % 190
-                ticker = f"0{raw_code:04d}.HK"
-                eng_base = f"VERIFIED HKEX SECURITIES CO. LTD {raw_code}"
-                chi_base = f"香港交易所認證實名企業{raw_code}"
-            elif "SSE" in exch_name:
-                raw_sse = 600800 + (id_counter + i) % 200
-                ticker = f"{raw_sse}.SH"
-                eng_base = f"SHANGHAI EXCHANGE LISTED CORP {raw_sse}"
-                chi_base = f"上海證券交易所實名企業{raw_sse}"
-            else:
-                raw_sz = 300500 + (id_counter + i) % 200
-                ticker = f"{raw_sz}.SZ"
-                eng_base = f"SHENZHEN EXCHANGE LISTED CORP {raw_sz}"
-                chi_base = f"深圳證券交易所實名企業{raw_sz}"
-
-            ipo_price = round(float(np.random.uniform(10.0, 220.0)), 2)
-
-            master_listings.append({
-                "ticker": ticker,
-                "eng": eng_base,
-                "chi": chi_base,
-                "exchange": exch_name,
-                "year": 2026,
-                "industry": ind,
-                "sub": sub,
-                "ipo_price": ipo_price,
-                "current_override": None,
-                "market_cap": round(float(np.random.uniform(15, 350)), 2)
-            })
-            id_counter += 1
-
-    # Deduplicate strictly by ticker
-    unique_tickers = set()
-    deduped_master = []
-    for item in master_listings:
-        if item["ticker"] not in unique_tickers:
-            unique_tickers.add(item["ticker"])
-            deduped_master.append(item)
-
     processed_data = []
     dates = pd.date_range(end=datetime.date.today(), periods=120, freq="B")
 
-    for item in deduped_master:
+    for item in master_listings:
         np.random.seed(sum(ord(c) for c in item["ticker"]) + item["year"])
         simulated_returns = np.random.normal(0.0008, 0.022, len(dates))
         prices = item["ipo_price"] * np.cumprod(1 + simulated_returns)
@@ -604,7 +535,7 @@ df = load_ipo_universe()
 
 # 3. SIDEBAR CONTROLS
 st.sidebar.markdown("### **Exchange Filters**")
-st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Multi-exchange cross-border registry (HKEX exact target 87, SSE, SZSE).</p>', unsafe_allow_html=True)
+st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Multi-exchange cross-border registry (HKEX, SSE, SZSE).</p>', unsafe_allow_html=True)
 
 selected_exchanges = st.sidebar.multiselect(
     "Exchanges",
