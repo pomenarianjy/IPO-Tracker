@@ -20,13 +20,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Single Combined Data Source from uni_data.py
+# Single Combined Data Source from ipo_data.py
 @st.cache_data
 def get_combined_ipo_data():
-    from uni_data import load_uni_data
+    from ipo_data import load_verified_hk_ipos_part1, load_verified_hk_ipos_part2
     
-    uni_data = load_uni_data()
-    df = pd.DataFrame(uni_data)
+    part1 = load_verified_hk_ipos_part1()
+    part2 = load_verified_hk_ipos_part2()
+    
+    combined = part1 + part2
+    df = pd.DataFrame(combined)
     df["Listing Date"] = pd.to_datetime(df["Listing Date"])
     return df
 
@@ -55,7 +58,7 @@ for _, row in df_ipos.iterrows():
 
 df_ipos["Latest Price"] = [f"HKD {p:.2f}" for p in all_latest_prices]
 df_ipos["Return Since IPO (%)"] = [f"{p:+.2f}%" for p in all_perf_pcts]
-# Keep raw numeric column for sorting or conditional styling if needed
+# Keep raw numeric column for sorting or internal checks
 df_ipos["_return_val"] = all_perf_pcts
 
 # App Header
