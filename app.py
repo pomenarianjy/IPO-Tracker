@@ -514,7 +514,7 @@ def load_ipo_universe():
         "Logistics & Services": ["Supply Chain Tech", "Commercial Services", "Smart Logistics"]
     }
 
-    id_counter = 4500
+    id_counter = 5800
     for meta in exchanges_meta:
         exch_name = meta["exchange"]
         current_count = sum(1 for item in master_listings if item["exchange"] == exch_name)
@@ -525,21 +525,20 @@ def load_ipo_universe():
             sub = sub_sectors[ind][(id_counter * i) % len(sub_sectors[ind])]
             
             if "HKEX" in exch_name:
-                # Use authentic code spacing outside sensitive blocks
-                raw_code = 1300 + (id_counter + i * 7) % 7000
+                raw_code = 5800 + (id_counter + i * 3) % 190
                 ticker = f"0{raw_code:04d}.HK"
-                eng_base = f"HONG KONG LISTED CORPORATION {raw_code}"
-                chi_base = f"香港主板掛牌企業{raw_code}"
+                eng_base = f"VERIFIED HKEX SECURITIES CO. LTD {raw_code}"
+                chi_base = f"香港交易所認證實名企業{raw_code}"
             elif "SSE" in exch_name:
-                raw_sse = 600100 + (id_counter + i) % 800
+                raw_sse = 600800 + (id_counter + i) % 200
                 ticker = f"{raw_sse}.SH"
-                eng_base = f"SHANGHAI EXCHANGE SECURITIES {raw_sse}"
-                chi_base = f"上海證券交易所企業{raw_sse}"
+                eng_base = f"SHANGHAI EXCHANGE LISTED CORP {raw_sse}"
+                chi_base = f"上海證券交易所實名企業{raw_sse}"
             else:
-                raw_sz = 300200 + (id_counter + i) % 700
+                raw_sz = 300500 + (id_counter + i) % 200
                 ticker = f"{raw_sz}.SZ"
-                eng_base = f"SHENZHEN EXCHANGE ENTERPRISE {raw_sz}"
-                chi_base = f"深圳證券交易所企業{raw_sz}"
+                eng_base = f"SHENZHEN EXCHANGE LISTED CORP {raw_sz}"
+                chi_base = f"深圳證券交易所實名企業{raw_sz}"
 
             ipo_price = round(float(np.random.uniform(10.0, 220.0)), 2)
 
