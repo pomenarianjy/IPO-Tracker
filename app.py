@@ -48,17 +48,25 @@ def fetch_live_yfinance_batch(tickers, listing_dates):
         
         try:
             tk = yf.Ticker(yf_symbol)
-            # Pull daily historical records starting precisely from the listing date
-            hist = tk.history(start=l_date.strftime("%Y-%m-%d"), end="2026-07-21")
+            # Fetch entire available historical series to prevent API blank outs on rigid date requests
+            full_hist = tk.history(period="max")
             
-            if hist.empty or len(hist) < 1:
-                # Fallback to recent trading window if exact IPO history vector is missing on Yahoo Finance
-                hist = tk.history(period="1mo")
+            if not full_hist.empty:
+                # Ensure the dataframe index is timezone-naive to compare with l_date
+                if full_hist.index.tz is not None:
+                    full_hist.index = full_hist.index.tz_localize(None)
                 
-            if not hist.empty:
-                history_cache[ticker] = hist
-                base_val = float(hist["Close"].iloc[0])
-                latest_val = float(hist["Close"].iloc[-1])
+                # Slice the true historical series starting from the IPO listing date forward
+                sliced_hist = full_hist[full_hist.index >= l_date]
+                
+                # Fallback to the absolute full history if strict slicing returns nothing
+                if sliced_hist.empty:
+                    sliced_hist = full_hist
+
+                history_cache[ticker] = sliced_hist
+                
+                base_val = float(sliced_hist["Close"].iloc[0])
+                latest_val = float(sliced_hist["Close"].iloc[-1])
                 
                 if base_val > 0:
                     pct = ((latest_val - base_val) / base_val) * 100
@@ -129,13 +137,13 @@ if selected_stock_str != "Overview Mode":
         chart_df = pd.DataFrame({"Price": [latest_price]})
     
     market_cap_value = latest_price * 2010000000
-    market_cap_str = f"HKD {market_cap_value:,.2f}"
+    market_cap_str = f"HKD {market_cap_value:,.2f}" if latest_price > 0 else "N/A"
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
         st.markdown("**Latest Price**")
-        st.markdown(f"HKD {latest_price:,.2f} ({perf_pct:+.2f}%)")
+        st.markdown(f"HKD {latest_price:,.2f} ({perf_pct:+.2f}%)" if latest_price > 0 else "Data Unscaled/Suspended")
     with col2:
         st.markdown("**Offering Price**")
         st.markdown(stock_info["Offering Price"])
@@ -151,7 +159,7 @@ if selected_stock_str != "Overview Mode":
     
     st.markdown("---")
     st.markdown("### Real Day-to-Day Yahoo Finance Price History")
-    if not chart_df.empty:
+    if len(chart_df) > 1:
         st.line_chart(chart_df["Price"])
     else:
         st.warning("No historical daily data available via Yahoo Finance for this ticker configuration.")
