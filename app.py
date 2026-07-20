@@ -23,7 +23,6 @@ st.markdown("""
         color: #1D1D1F;
     }
 
-    /* Hide default Streamlit elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -32,7 +31,6 @@ st.markdown("""
         padding: 2rem 3rem;
     }
 
-    /* Apple-style Glass / Card Container */
     .apple-card {
         background: #FFFFFF;
         border-radius: 18px;
@@ -47,7 +45,6 @@ st.markdown("""
         box-shadow: 0 6px 32px rgba(0, 0, 0, 0.08);
     }
 
-    /* Typography Hierarchy */
     .hero-title {
         font-size: 42px;
         font-weight: 700;
@@ -72,18 +69,10 @@ st.markdown("""
         margin-bottom: 16px;
     }
 
-    /* Metrics & Badges */
-    .metric-value {
-        font-size: 28px;
-        font-weight: 600;
-        color: #1D1D1F;
-    }
-    
     .badge-hkex { background-color: #E8F2FF; color: #0066CC; padding: 4px 10px; border-radius: 6px; font-weight: 500; font-size: 12px; }
     .badge-sse { background-color: #FFEAEA; color: #FF3B30; padding: 4px 10px; border-radius: 6px; font-weight: 500; font-size: 12px; }
     .badge-szse { background-color: #FFF4E5; color: #FF9500; padding: 4px 10px; border-radius: 6px; font-weight: 500; font-size: 12px; }
 
-    /* Custom Streamlit Input Overrides */
     .stSelectbox div[data-baseweb="select"] {
         background-color: #FFFFFF;
         border-radius: 12px;
@@ -92,7 +81,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- DATA UNIVERSE INITIALIZATION (YTD IPOs: HKEX ~85, SSE ~19, SZSE ~16) ---
+# --- DATA UNIVERSE INITIALIZATION ---
 @st.cache_data
 def load_ipo_universe():
     data = [
@@ -127,7 +116,7 @@ df_ipo = load_ipo_universe()
 st.markdown("<div class='hero-title'>Jasmine’s Greater China IPO Tracker</div>", unsafe_allow_html=True)
 st.markdown("<div class='hero-subtitle'>Live tracking, performance analytics, and institutional-grade screening for HKEX, SSE, and SZSE listings.</div>", unsafe_allow_html=True)
 
-# --- FILTER CONTROLS BAR (Apple Minimalist Style) ---
+# --- FILTER CONTROLS BAR ---
 with st.container():
     st.markdown("<div class='apple-card'>", unsafe_allow_html=True)
     f_col1, f_col2, f_col3 = st.columns(3)
@@ -170,37 +159,34 @@ def fetch_live_performance(tickers):
                 history_df = hist[['Close']].reset_index()
                 history_df.columns = ['Date', 'Close']
                 performance_data[ticker] = {
-                    "price": current_price,
-                    "change": change_pct,
+                    "price": float(current_price),
+                    "change": float(change_pct),
                     "history": history_df,
-                    "market_cap": stock.info.get("marketCap", 0),
-                    "pe_ratio": stock.info.get("trailingPE", "N/A"),
-                    "volume": hist['Volume'].iloc[-1] if 'Volume' in hist else 0
+                    "market_cap": float(stock.info.get("marketCap", 0) or 0),
+                    "pe_ratio": str(stock.info.get("trailingPE", "N/A")),
+                    "volume": int(hist['Volume'].iloc[-1]) if 'Volume' in hist else 0
                 }
             else:
-                performance_data[ticker] = {"price": 0.0, "change": 0.0, "history": pd.DataFrame(), "market_cap": 0, "pe_ratio": "N/A", "volume": 0}
+                performance_data[ticker] = {"price": 0.0, "change": 0.0, "history": pd.DataFrame(), "market_cap": 0.0, "pe_ratio": "N/A", "volume": 0}
         except Exception:
-            performance_data[ticker] = {"price": 0.0, "change": 0.0, "history": pd.DataFrame(), "market_cap": 0, "pe_ratio": "N/A", "volume": 0}
+            performance_data[ticker] = {"price": 0.0, "change": 0.0, "history": pd.DataFrame(), "market_cap": 0.0, "pe_ratio": "N/A", "volume": 0}
     return performance_data
 
 live_data = fetch_live_performance(filtered_df["ticker"].tolist())
 
-# Enrich dataframe with live metrics
-for idx, row in filtered_df.iterrows():
-    t = row["ticker"]
-    filtered_df.loc[idx, "live_price"] = live_data[t]["price"]
-    filtered_df.loc[idx, "change_pct"] = live_data[t]["change"]
-    filtered_df.loc[idx, "market_cap"] = live_data[t]["market_cap"]
-    filtered_df.loc[idx, "pe_ratio"] = live_data[t]["pe_ratio"]
+# Safely enrich dataframe columns to avoid typing exceptions
+filtered_df["live_price"] = [live_data[t]["price"] for t in filtered_df["ticker"]]
+filtered_df["change_pct"] = [live_data[t]["change"] for t in filtered_df["ticker"]]
+filtered_df["market_cap"] = [live_data[t]["market_cap"] for t in filtered_df["ticker"]]
+filtered_df["pe_ratio"] = [live_data[t]["pe_ratio"] for t in filtered_df["ticker"]]
 
-# --- MAIN LAYOUT: TWO COLUMNS (Full Menu Selector Left | Deep-Dive Right) ---
+# --- MAIN LAYOUT ---
 left_col, right_col = st.columns([1.2, 1.8], gap="large")
 
 with left_col:
     st.markdown("<div class='section-header'>IPO Full Menu</div>", unsafe_allow_html=True)
     st.markdown("<p style='color: #86868B; font-size: 14px; margin-top: -10px; margin-bottom: 16px;'>Select a company to analyze live performance & comparable assets.</p>", unsafe_allow_html=True)
     
-    # Selection mapping
     stock_options = filtered_df.apply(lambda r: f"{r['ticker']} — {r['name_en']} ({r['name_cn']})", axis=1).tolist()
     
     if not stock_options:
@@ -209,7 +195,6 @@ with left_col:
     else:
         selected_stock_str = st.selectbox("Directory Selection", stock_options, label_visibility="collapsed")
         
-        # Render minimalist menu list cards
         for idx, row in filtered_df.iterrows():
             badge_class = f"badge-{row['exchange'].lower()}"
             chg = live_data[row['ticker']]['change']
@@ -236,12 +221,10 @@ with right_col:
     st.markdown("<div class='section-header'>Deep-Dive Analytics Panel</div>", unsafe_allow_html=True)
     
     if selected_stock_str:
-        # Extract selected ticker
         selected_ticker = selected_stock_str.split(" — ")[0]
         selected_row = df_ipo[df_ipo["ticker"] == selected_ticker].iloc[0]
         metrics = live_data[selected_ticker]
         
-        # Display Company Header Card
         st.markdown(f"""
         <div class='apple-card'>
             <div style='display: flex; justify-content: space-between; align-items: flex-start;'>
@@ -281,7 +264,6 @@ with right_col:
         </div>
         """, unsafe_allow_html=True)
         
-        # Stock Performance Chart
         st.markdown("<div class='apple-card'>", unsafe_allow_html=True)
         st.markdown("<h4 style='margin-top: 0; font-size: 17px; font-weight: 600;'>Post-IPO Performance Trajectory</h4>", unsafe_allow_html=True)
         
@@ -292,7 +274,6 @@ with right_col:
             st.info("Performance chart history compiling from Yahoo Finance feed...")
         st.markdown("</div>", unsafe_allow_html=True)
         
-        # Comparable Companies from Listed Universe
         st.markdown("<div class='apple-card'>", unsafe_allow_html=True)
         st.markdown("<h4 style='margin-top: 0; font-size: 17px; font-weight: 600;'>Comparable Universe Peers</h4>", unsafe_allow_html=True)
         
@@ -316,14 +297,13 @@ with right_col:
                 """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- BOTTOM SECTION: TOP PERFORMING STOCKS OVERALL & PER EXCHANGE ---
+# --- BOTTOM SECTION: TOP PERFORMING STOCKS LEADERBOARDS ---
 st.markdown("<hr style='border: none; border-top: 1px solid #D2D2D7; margin: 40px 0;'>", unsafe_allow_html=True)
 st.markdown("<div class='section-header'>Market Performance Leaderboards</div>", unsafe_allow_html=True)
 
-# Build leaderboards dataframe
 leaderboard_df = df_ipo.copy()
-leaderboard_df["current_price"] = leaderboard_df["ticker"].map(lambda t: live_data[t]["price"])
-leaderboard_df["performance"] = leaderboard_df["ticker"].map(lambda t: live_data[t]["change"])
+leaderboard_df["current_price"] = [live_data[t]["price"] for t in leaderboard_df["ticker"]]
+leaderboard_df["performance"] = [live_data[t]["change"] for t in leaderboard_df["ticker"]]
 
 l_col1, l_col2, l_col3, l_col4 = st.columns(4)
 
