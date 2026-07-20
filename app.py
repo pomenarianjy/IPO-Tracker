@@ -11,15 +11,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS to shrink metric value font size specifically for the Market Cap card to prevent clipping
-st.markdown("""
-    <style>
-    div[data-testid="metric-container"]:nth-of-type(4) div[data-testid="stMetricValue"] {
-        font-size: 1.3rem !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 # Load and Combine Data from Both Modules
 @st.cache_data
 def get_combined_ipo_data():
@@ -88,8 +79,8 @@ if selected_stock_str != "Overview Mode":
     perf_pct = ((latest_price - base_price) / base_price) * 100
     market_cap = latest_price * 2010000000 # Mock shares outstanding calculation roughly around 2B shares
     
-    # Format Market Cap cleanly with full digits and readable string
-    market_cap_str = f"HKD {market_cap:,.0f}"
+    # Format Market Cap cleanly into billions to prevent any truncation issues
+    market_cap_str = f"HKD {market_cap / 1e9:.2f} Billion"
     
     # Display Key Statistics Cards
     m1, m2, m3, m4, m5 = st.columns(5)
