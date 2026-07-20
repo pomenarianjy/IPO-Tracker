@@ -1,313 +1,174 @@
-import streamlit as st
+import os
 import pandas as pd
-import yfinance as yf
+import streamlit as st
 import plotly.express as px
+from datetime import datetime
 
-# Import the verified full database from the separate file
-from ipo_data import load_verified_hk_ipos
-
-# --- PAGE CONFIGURATION ---
+# Page configuration
 st.set_page_config(
-    page_title="Jasmine’s HKEX IPO Tracker",
-    page_icon="🇭🇰",
-    layout="wide",
+    page_title="IPO Analytics Dashboard",
+    page_icon="📈",
+    layout="wide"
 )
 
-# --- TITLE & BRANDING ---
-st.title("🇭🇰 Jasmine’s Verified HKEX IPO Tracker")
-st.markdown(
-    "Live performance tracking dashboard for verified Hong Kong Exchanges and"
-    " Clearing (HKEX) listings linked directly with **Yahoo Finance**."
-)
-st.markdown("---")
+# Custom CSS for styling
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f8f9fa;
+    }
+    .stMetric {
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# --- LOAD DATA ---
-df_ipo = pd.DataFrame(load_verified_hk_ipos())
-
-# --- SCREENING CONTROLS (MAIN APP INTERFACE) ---
-st.markdown("### 🔍 Market Screening & Filter Options")
-filter_col1, filter_col2, filter_col3 = st.columns(3)
-
-with filter_col1:
-  exchanges = ["All"] + list(df_ipo["Exchange"].unique())
-  selected_exchange = st.selectbox("Filter by Exchange Tier", exchanges)
-
-with filter_col2:
-  industries = ["All"] + list(df_ipo["Industry"].unique())
-  selected_industry = st.selectbox("Filter by Industry", industries)
-
-with filter_col3:
-  if selected_industry != "All":
-    sub_sectors = ["All"] + list(
-        df_ipo[df_ipo["Industry"] == selected_industry]["Sub-Sector"].unique()
-    )
-  else:
-    sub_sectors = ["All"] + list(df_ipo["Sub-Sector"].unique())
-  selected_sub_sector = st.selectbox("Filter by Sub-Sector", sub_sectors)
-
-st.markdown("---")
-
-
-# --- YAHOO FINANCE LIVE CONNECTOR (AUTO-FORMATTING FOR 4-DIGIT API VALIDITY) ---
-@st.cache_data(ttl=600)
-def fetch_live_data(tickers):
-  live_data = {}
-  for t in tickers:
-    # Extract numeric string out of '02249.HK' or '2249.HK'
-    clean_code = t.replace(".HK", "").strip()
-
-    # Create candidate list for Yahoo's specific formatting structures
-    # Primary: Stripped integer 4-digit formatting (e.g., 2249.HK)
-    # Secondary: 5-digit zero padded fallback (e.g., 02249.HK)
-    try:
-      stripped_code = str(int(clean_code))
-    except ValueError:
-      stripped_code = clean_code
-
-    variations = [f"{stripped_code}.HK", f"{clean_code.zfill(5)}.HK", f"{t}"]
-
-    success = False
-    for candidate in variations:
-      try:
-        stock = yf.Ticker(candidate)
-        hist = stock.history(period="6m")  # Fetch recent 6 months trajectory
-        info = stock.info
-        if not hist.empty:
-          current_price = hist["Close"].iloc[-1]
-          live_data[t] = {
-              "Current Price": current_price,
-              "History": hist,
-              "Info": info,
-              "ResolvedTicker": candidate,
-          }
-          success = True
-          break
-      except Exception:
-        continue
-
-    if not success:
-      live_data[t] = None
-  return live_data
-
-
-tickers_to_fetch = df_ipo["Ticker"].tolist()
-live_market_data = fetch_live_data(tickers_to_fetch)
-
-# Calculate performance metrics
-performance_rows = []
-for index, row in df_ipo.iterrows():
-  t = row["Ticker"]
-  market_info = live_market_data.get(t)
-  if market_info:
-    curr_price = market_info["Current Price"]
-    offer_price = row["Offering Price"]
-    cum_return = ((curr_price - offer_price) / offer_price) * 100
-  else:
-    curr_price = row["Offering Price"]
-    cum_return = 0.0
-
-  performance_rows.append(
-      {
-          "Ticker": row["CleanTicker"],
-          "Full Ticker": t,
-          "English Name": row["English Name"],
-          "Chinese Name": row["Chinese Name"],
-          "Exchange": row["Exchange"],
-          "Industry": row["Industry"],
-          "Sub-Sector": row["Sub-Sector"],
-          "Listing Date": row["Listing Date"],
-          "Offering Price": row["Offering Price"],
-          "Current Price": round(curr_price, 2),
-          "Gain/Loss (%)": round(cum_return, 2),
-      }
-  )
-
-df_display = pd.DataFrame(performance_rows)
-
-# Filter display dataframe based on filter settings
-if selected_exchange != "All":
-  df_display = df_display[df_display["Exchange"] == selected_exchange]
-if selected_industry != "All":
-  df_display = df_display[df_display["Industry"] == selected_industry]
-if selected_sub_sector != "All":
-  df_display = df_display[df_display["Sub-Sector"] == selected_sub_sector]
-
-
-# --- LAYOUT: STUCK LEFT PANEL & RIGHT ANALYTICS PANEL ---
-col_menu, col_panel = st.columns([1.1, 1.3])
-
-with col_menu:
-  st.subheader("📋 Listed Universe Directory")
-
-  if df_display.empty:
-    st.warning("No companies match the chosen filters.")
-    selected_clean_ticker = None
-    full_ticker = None
-  else:
-    # MOVED DROPDOWN SELECTION BOX TO STICK ON TOP OF THE WHOLE LIST
-    selected_clean_ticker = st.selectbox(
-        "🎯 Select Stock to Analyze",
-        df_display["Ticker"].tolist(),
-        key="selector_top",
-    )
-
-    menu_view = df_display[
-        ["Ticker", "English Name", "Chinese Name", "Gain/Loss (%)"]
-    ]
-    st.dataframe(menu_view, use_container_width=True, height=450, hide_index=True)
-
-    selected_row = df_display[df_display["Ticker"] == selected_clean_ticker].iloc[
-        0
-    ]
-    full_ticker = selected_row["Full Ticker"]
-
-with col_panel:
-  if selected_clean_ticker and full_ticker:
-    st.subheader(f"📈 Analytics Panel: {selected_clean_ticker}")
-
-    if full_ticker in live_market_data and live_market_data[full_ticker]:
-      m_data = live_market_data[full_ticker]
-      info = m_data["Info"]
-      hist = m_data["History"]
-
-      col1, col2, col3 = st.columns(3)
-      col1.metric(
-          "Current Price",
-          f"{selected_row['Current Price']} HKD",
-          f"{selected_row['Gain/Loss (%)']}%",
-      )
-      col2.metric("Offering Price", f"{selected_row['Offering Price']} HKD")
-      col3.metric(
-          "Market Cap",
-          f"{info.get('marketCap', 0):,} HKD"
-          if info.get("marketCap")
-          else "N/A",
-      )
-
-      st.markdown("---")
-      st.markdown("**Post-IPO Price Performance Chart**")
-      fig = px.line(
-          hist,
-          x=hist.index,
-          y="Close",
-          title=f"{selected_row['English Name']} ({full_ticker}) Trajectory",
-          labels={"Close": "Price (HKD)", "index": "Date"},
-      )
-      fig.add_hline(
-          y=selected_row["Offering Price"],
-          line_dash="dash",
-          line_color="red",
-          annotation_text="Offering Price",
-      )
-      st.plotly_chart(fig, use_container_width=True)
-
-      st.markdown("### 📊 Crucial Information & Fundamentals")
-      info_col1, info_col2 = st.columns(2)
-      with info_col1:
-        st.write(
-            f"**Exchange Board:**"
-            f" {info.get('exchange', selected_row['Exchange'])}"
-        )
-        st.write(
-            f"**Industry Sector:**"
-            f" {info.get('sector', selected_row['Industry'])}"
-        )
-        st.write(f"**Sub-Sector:** {selected_row['Sub-Sector']}")
-        st.write(f"**Listing Date:** {selected_row['Listing Date']}")
-      with info_col2:
-        st.write(
-            f"**Volume Traded:** {info.get('volume', 'N/A'):,}"
-            if info.get("volume")
-            else "**Volume:** N/A"
-        )
-        st.write(f"**52-Week High:** {info.get('fiftyTwoWeekHigh', 'N/A')}")
-        st.write(f"**52-Week Low:** {info.get('fiftyTwoWeekLow', 'N/A')}")
-        st.write(f"**P/E Ratio:** {info.get('trailingPE', 'N/A')}")
-
-      st.markdown("---")
-      st.markdown("### 🏢 Comparable Companies (Listed Universe)")
-      comparables = df_display[
-          (df_display["Industry"] == selected_row["Industry"])
-          & (df_display["Ticker"] != selected_clean_ticker)
-      ]
-      if not comparables.empty:
-        st.dataframe(
-            comparables[
-                ["Ticker", "English Name", "Chinese Name", "Gain/Loss (%)"]
-            ],
-            use_container_width=True,
-            hide_index=True,
-        )
-      else:
-        st.info("No comparable peers in the current sub-sector view.")
-
+# Load data function with caching
+@st.cache_data
+def load_data():
+    # Check if a custom dataset exists, otherwise create a mock/sample dataframe or look for ipo_data.py / csv
+    if os.path.exists("ipo_data.csv"):
+        df = pd.read_csv("ipo_data.csv")
     else:
-      # Handled fallback gracefully using database static prices if Yahoo's API fails
-      st.warning(
-          f"Real-time Yahoo connection timeout for {full_ticker}. Displaying"
-          " base listing metadata metrics below."
-      )
-      col1, col2 = st.columns(2)
-      col1.metric("Offering Price", f"{selected_row['Offering Price']} HKD")
-      col2.metric("Listing Date", f"{selected_row['Listing Date']}")
+        # Fallback or sample dataset structure including English and Chinese names
+        data = {
+            "Company": [
+                "TechCorp Ltd (科创有限公司)", 
+                "BioHealth Inc (生物健康股份)", 
+                "GreenEnergy Co (绿色能源集团)", 
+                "CloudScale Systems (云规模系统)", 
+                "SmartRetail Ltd (智慧零售股份)"
+            ],
+            "Ticker": ["09999", "01810", "09618", "09888", "06618"],
+            "Sector": ["Technology", "Healthcare", "Clean Energy", "Technology", "Consumer"],
+            "Listing_Date": ["2026-01-15", "2026-02-20", "2026-03-10", "2026-04-05", "2026-05-12"],
+            "Funds_Raised_USD_M": [1200, 450, 800, 2500, 300],
+            "Issue_Price": [50.0, 22.5, 100.0, 150.0, 15.0],
+            "Current_Price": [65.0, 20.0, 130.0, 140.0, 18.5]
+        }
+        df = pd.DataFrame(data)
+    
+    # Data preprocessing
+    if "Listing_Date" in df.columns:
+        df["Listing_Date"] = pd.to_datetime(df["Listing_Date"])
+        df["Year"] = df["Listing_Date"].dt.year
+        df["Month"] = df["Listing_Date"].dt.strftime("%Y-%m")
+        
+    if "Issue_Price" in df.columns and "Current_Price" in df.columns:
+        # Ensure proper numeric type conversion to prevent zero division or string concatenation issues
+        df["Issue_Price"] = pd.to_numeric(df["Issue_Price"], errors="coerce")
+        df["Current_Price"] = pd.to_numeric(df["Current_Price"], errors="coerce")
+        df["Return_Pct"] = ((df["Current_Price"] - df["Issue_Price"]) / df["Issue_Price"]) * 100
+        
+    return df
 
-      st.markdown("### 📊 Static Listing Profile")
-      st.write(f"**English Corporate Name:** {selected_row['English Name']}")
-      st.write(f"**Chinese Corporate Name:** {selected_row['Chinese Name']}")
-      st.write(f"**Assigned Board Structure:** {selected_row['Exchange']}")
-      st.write(f"**Industry Group Cluster:** {selected_row['Industry']}")
-      st.write(f"**Sub-Sector Specialty:** {selected_row['Sub-Sector']}")
-  else:
-    st.info("Please adjust filters or select a valid company from the directory.")
+df = load_data()
 
-# --- BOTTOM SECTION: TOP PERFORMING STOCKS ---
+# App Title & Description
+st.title("📈 Initial Public Offering (IPO) Analytics Dashboard")
+st.markdown("Explore market trends, capital raised, and post-listing performance metrics interactively.")
+
+# Sidebar Filters
+st.sidebar.header("Filter Options")
+
+# Sector Filter
+sectors = ["All"] + sorted(df["Sector"].unique().tolist()) if "Sector" in df.columns else ["All"]
+selected_sector = st.sidebar.selectbox("Select Sector", sectors)
+
+# Year Filter
+years = ["All"] + sorted(df["Year"].dropna().unique().tolist(), reverse=True) if "Year" in df.columns else ["All"]
+selected_year = st.sidebar.selectbox("Select Listing Year", years)
+
+# Company / Stock Filter (showing English and Chinese names)
+companies = ["All"] + sorted(df["Company"].unique().tolist()) if "Company" in df.columns else ["All"]
+selected_company = st.sidebar.selectbox("Select Stock (Company)", companies)
+
+# Apply Filters
+filtered_df = df.copy()
+if selected_sector != "All":
+    filtered_df = filtered_df[filtered_df["Sector"] == selected_sector]
+if selected_year != "All":
+    filtered_df = filtered_df[filtered_df["Year"] == int(selected_year)]
+if selected_company != "All":
+    filtered_df = filtered_df[filtered_df["Company"] == selected_company]
+
+# Main Dashboard Metrics
+st.subheader("Key Performance Indicators")
+col1, col2, col3, col4 = st.columns(4)
+
+total_ipos = len(filtered_df)
+total_funds = filtered_df["Funds_Raised_USD_M"].sum() if "Funds_Raised_USD_M" in filtered_df.columns else 0
+avg_return = filtered_df["Return_Pct"].mean() if "Return_Pct" in filtered_df.columns else 0
+max_fund = filtered_df["Funds_Raised_USD_M"].max() if "Funds_Raised_USD_M" in filtered_df.columns else 0
+
+col1.metric("Total IPOs", f"{total_ipos}")
+col2.metric("Total Capital Raised", f"${total_funds:,.2f}M")
+col3.metric("Avg. Post-Listing Return", f"{avg_return:.2f}%" if not pd.isna(avg_return) else "N/A")
+col4.metric("Largest Deal", f"${max_fund:,.2f}M")
+
 st.markdown("---")
-st.subheader("🏆 Top Performing IPO Stocks Overall & By Exchange Tier")
 
-if not df_display.empty:
-  bot_col1, bot_col2 = st.columns(2)
+# Charts Section
+row1_col1, row1_col2 = st.columns(2)
 
-  with bot_col1:
-    st.markdown("#### 🌟 Overall Top Performers")
-    top_overall = df_display.sort_values(by="Gain/Loss (%)", ascending=False).head(
-        3
-    )
-    st.dataframe(
-        top_overall[
-            [
-                "Ticker",
-                "English Name",
-                "Exchange",
-                "Offering Price",
-                "Current Price",
-                "Gain/Loss (%)",
-            ]
-        ],
-        hide_index=True,
-        use_container_width=True,
-    )
+with row1_col1:
+    st.subheader("Capital Raised by Sector")
+    if "Sector" in filtered_df.columns and "Funds_Raised_USD_M" in filtered_df.columns:
+        sector_df = filtered_df.groupby("Sector")["Funds_Raised_USD_M"].sum().reset_index()
+        fig_sector = px.bar(sector_df, x="Sector", y="Funds_Raised_USD_M", 
+                            title="Total Funds Raised per Sector (USD Millions)",
+                            color="Sector", text_auto='.2f')
+        st.plotly_chart(fig_sector, use_container_width=True)
+    else:
+        st.info("Sector or Funds data unavailable.")
 
-  with bot_col2:
-    st.markdown("#### 🏛️ Top Performer by Exchange Board")
-    best_per_exchange = df_display.loc[
-        df_display.groupby("Exchange")["Gain/Loss (%)"].idxmax()
-    ]
-    st.dataframe(
-        best_per_exchange[
-            [
-                "Exchange",
-                "Ticker",
-                "English Name",
-                "Offering Price",
-                "Current Price",
-                "Gain/Loss (%)",
-            ]
-        ],
-        hide_index=True,
-        use_container_width=True,
-    )
+with row1_col2:
+    st.subheader("IPO Timeline Trend")
+    if "Month" in filtered_df.columns:
+        time_df = filtered_df.groupby("Month").size().reset_index(name="IPO_Count")
+        fig_time = px.line(time_df, x="Month", y="IPO_Count", markers=True,
+                           title="Number of Listings Over Time")
+        st.plotly_chart(fig_time, use_container_width=True)
+    else:
+        st.info("Date data unavailable for timeline.")
+
+row2_col1, row2_col2 = st.columns(2)
+
+with row2_col1:
+    st.subheader("Performance Distribution (Returns %)")
+    if "Return_Pct" in filtered_df.columns:
+        fig_hist = px.histogram(filtered_df, x="Return_Pct", nbins=20,
+                                title="Distribution of Post-Listing Returns (%)",
+                                color_discrete_sequence=["indianred"])
+        st.plotly_chart(fig_hist, use_container_width=True)
+    else:
+        st.info("Return data unavailable.")
+
+with row2_col2:
+    st.subheader("Top 10 IPOs by Capital Raised")
+    if "Funds_Raised_USD_M" in filtered_df.columns and "Company" in filtered_df.columns:
+        top_ipos = filtered_df.nlargest(10, "Funds_Raised_USD_M")
+        fig_top = px.bar(top_ipos, x="Funds_Raised_USD_M", y="Company", orientation="h",
+                         title="Largest IPOs by Funds Raised", color="Funds_Raised_USD_M")
+        fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
+        st.plotly_chart(fig_top, use_container_width=True)
+    else:
+        st.info("Required columns for top IPOs missing.")
 
 st.markdown("---")
-st.caption(
-    "Jasmine’s HKEX IPO Tracker • Powered by Streamlit & Yahoo Finance API"
+
+# Data Table Explorer
+st.subheader("Detailed IPO Dataset Explorer")
+st.dataframe(filtered_df, use_container_width=True)
+
+# Download button for filtered data
+csv = filtered_df.to_csv(index=False).encode('utf-8')
+st.download_button(
+    label="Download Filtered Data as CSV",
+    data=csv,
+    file_name='filtered_ipo_data.csv',
+    mime='text/csv',
 )
