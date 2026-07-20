@@ -15,27 +15,27 @@ st.set_page_config(
 st.markdown("""
     <style>
     .main-title {
-        font-size: 3rem;
+        font-size: 3.2rem;
         color: #1E3A8A;
         font-weight: 800;
         margin-bottom: 2px;
         letter-spacing: -0.5px;
     }
     .sub-title {
-        font-size: 1.2rem;
+        font-size: 1.25rem;
         color: #4B5563;
         margin-bottom: 25px;
         font-weight: 400;
     }
     .section-title {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
         color: #1F2937;
         font-weight: 700;
-        margin-top: 15px;
-        margin-bottom: 10px;
+        margin-top: 20px;
+        margin-bottom: 12px;
     }
     .card-title {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         color: #1E3A8A;
         font-weight: 700;
         margin-bottom: 12px;
@@ -155,15 +155,16 @@ with col_right:
     else:
         st.info("No comparable industry peers matched in current filter frame.")
 
-# --- BOTTOM SECTION: TOP PERFORMING STOCKS YTD (RATE-LIMIT SAFE) ---
+# --- BOTTOM SECTION: TOP & WORST PERFORMING IPO STOCKS YTD (PURE DATASET DRIVEN) ---
 st.markdown("---")
-st.markdown('<p class="section-title">🏆 Top Performing IPO Stocks Year-to-Date</p>', unsafe_allow_html=True)
+st.markdown('<p class="section-title">🏆 Top 5 Performing IPO Stocks Year-to-Date</p>', unsafe_allow_html=True)
 
 @st.cache_data(ttl=1800)
-def compute_ytd_leaderboard(df):
+def compute_comprehensive_leaderboard(df):
     results = []
-    sample_df = df.head(20)  # Scans top 20 efficiently without flooding API limits
-    for _, row in sample_df.iterrows():
+    
+    # Strictly evaluating solely from the loaded dataset without hardcoded outside interference
+    for _, row in df.iterrows():
         try:
             t_obj = yf.Ticker(row['Ticker'])
             h_df = t_obj.history(period="ytd")
@@ -180,17 +181,28 @@ def compute_ytd_leaderboard(df):
                 })
         except Exception:
             continue
+            
     res_df = pd.DataFrame(results)
-    if not res_df.empty:
-        return res_df.sort_values(by="YTD Return (%)", ascending=False).head(5)
-    return pd.DataFrame()
+    if res_df.empty:
+        return pd.DataFrame(), pd.DataFrame()
+        
+    top_5 = res_df.sort_values(by="YTD Return (%)", ascending=False).head(5)
+    worst_5 = res_df.sort_values(by="YTD Return (%)", ascending=True).head(5)
+    return top_5, worst_5
 
-top_performers_df = compute_ytd_leaderboard(df_ipo)
+top_performers_df, worst_performers_df = compute_comprehensive_leaderboard(df_ipo)
 
 if not top_performers_df.empty:
     st.dataframe(top_performers_df, use_container_width=True, hide_index=True)
 else:
-    st.info("Leaderboard active caching sync in progress. Check back in a moment.")
+    st.info("Top leaderboard calculation in progress...")
+
+st.markdown('<p class="section-title">⚠️ Bottom 5 Underperforming IPO Stocks Year-to-Date</p>', unsafe_allow_html=True)
+
+if not worst_performers_df.empty:
+    st.dataframe(worst_performers_df, use_container_width=True, hide_index=True)
+else:
+    st.info("Underperformer leaderboard calculation in progress...")
 
 # --- FOOTER ---
 st.markdown("---")
