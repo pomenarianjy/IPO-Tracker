@@ -91,7 +91,7 @@ APPLE_CSS = """
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
 
-# 2. Fully Verified HKEX & Exchange Official Database (No placeholders or guesswork)
+# 2. Fully Verified HKEX & Exchange Official Database
 @st.cache_data
 def load_ipo_universe():
     verified_listings = [
@@ -372,58 +372,42 @@ def load_ipo_universe():
 
 df = load_ipo_universe()
 
-# 3. Header Section with Top-Right Exchange Official Listing Counters
+# 3. Header Section
 header_col1, header_col2 = st.columns([2.2, 2.8])
 
 with header_col1:
     st.markdown('<p class="hero-title">Jasmine’s IPO Intelligence</p>', unsafe_allow_html=True)
-    st.markdown('<p class="hero-subtitle">Comprehensive official multi-sector tracking across HKEX official listings (2024–2026).</p>', unsafe_allow_html=True)
+    st.markdown('<p class="hero-subtitle">Official verified issuer tracking across HKEX official listings.</p>', unsafe_allow_html=True)
 
 with header_col2:
-    hkex_count = len(df)
-    sse_count = 5
-    szex_count = 3
-
     stat_cols = st.columns(3)
     with stat_cols[0]:
         st.markdown(f"""
             <div class="stat-badge">
-                <span class="metric-label">HKEX Tracked</span><br>
-                <span class="metric-value" style="color:#0066CC;">{hkex_count}</span>
+                <span class="metric-label">Verified Issuers</span><br>
+                <span class="metric-value" style="color:#0066CC;">{len(df)}</span>
             </div>
         """, unsafe_allow_html=True)
     with stat_cols[1]:
         st.markdown(f"""
             <div class="stat-badge">
-                <span class="metric-label">SSE Tracked</span><br>
-                <span class="metric-value" style="color:#5856D6;">{sse_count}</span>
+                <span class="metric-label">Sectors Tracked</span><br>
+                <span class="metric-value" style="color:#5856D6;">{df['Industry'].nunique()}</span>
             </div>
         """, unsafe_allow_html=True)
     with stat_cols[2]:
         st.markdown(f"""
             <div class="stat-badge">
-                <span class="metric-label">SZEX Tracked</span><br>
-                <span class="metric-value" style="color:#AF52DE;">{szex_count}</span>
+                <span class="metric-label">Exchange Source</span><br>
+                <span class="metric-value" style="color:#AF52DE;">HKEX</span>
             </div>
         """, unsafe_allow_html=True)
 
 st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
 
-# 4. Sidebar Screening Configuration Restored to Full Multi-Filters Layout
+# 4. Sidebar Screening Configuration
 st.sidebar.markdown("### **Filters & Controls**")
-st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Verified public exchange database.</p>', unsafe_allow_html=True)
-
-selected_exchanges = st.sidebar.multiselect(
-    "Stock Exchanges",
-    options=df["Exchange"].unique().tolist(),
-    default=df["Exchange"].unique().tolist()
-)
-
-selected_years = st.sidebar.multiselect(
-    "Listing Years",
-    options=[2026, 2025, 2024],
-    default=[2026, 2025, 2024]
-)
+st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Official HKEX database records.</p>', unsafe_allow_html=True)
 
 selected_industries = st.sidebar.multiselect(
     "All Industry Sectors",
@@ -431,18 +415,14 @@ selected_industries = st.sidebar.multiselect(
     default=df["Industry"].unique().tolist()
 )
 
-filtered_df = df[
-    df["Exchange"].isin(selected_exchanges) &
-    df["Listing Year"].isin(selected_years) &
-    df["Industry"].isin(selected_industries)
-]
+filtered_df = df[df["Industry"].isin(selected_industries)]
 
-# 5. Main Content Layout: Split Panel
+# 5. Main Content Layout: Split Panel (Left Panel Restored)
 col_left, col_right = st.columns([1.1, 1.4], gap="large")
 
 with col_left:
-    st.markdown("### **Full Market Directory**")
-    st.markdown(f'<p style="font-size:13px; color:#86868B;">Showing {len(filtered_df)} verified public listings across exchanges.</p>', unsafe_allow_html=True)
+    st.markdown("### **Verified Official Market Directory**")
+    st.markdown(f'<p style="font-size:13px; color:#86868B;">Showing {len(filtered_df)} official exchange-verified listings.</p>', unsafe_allow_html=True)
     
     search_query = st.text_input("Quick Search", placeholder="Search ticker, English or Chinese name...")
     
@@ -455,17 +435,17 @@ with col_left:
     else:
         display_df = filtered_df
 
-    menu_table = display_df[["Ticker", "English Name", "Industry", "Listing Year", "Total Return (%)"]].reset_index(drop=True)
+    menu_table = display_df[["Ticker", "English Name", "Industry", "Total Return (%)"]].reset_index(drop=True)
 
     if not display_df.empty:
         selected_ticker = st.selectbox(
             "Choose Company for Deep Dive",
             options=display_df["Ticker"].tolist(),
-            format_func=lambda x: f"{x} - {display_df[display_df['Ticker'] == x]['English Name'].values[0]} ({display_df[display_df['Ticker'] == x]['Chinese Name'].values[0]})"
+            format_func=lambda x: f"{x} - {display_df[display_df['Ticker'] == x]['English Name'].values[0]}"
         )
     else:
         selected_ticker = None
-        st.warning("No companies match your active filters. Please adjust the sidebar options.")
+        st.warning("No companies match your active filters.")
 
     st.dataframe(menu_table, use_container_width=True, height=400)
 
@@ -477,8 +457,9 @@ with col_right:
         
         st.markdown(f"""
             <div class="apple-card">
-                <h2 style="margin:0; font-size:24px;">{stock_info['English Name']} <span style="color:#86868B; font-weight:400; font-size:18px;">{stock_info['Chinese Name']}</span></h2>
-                <p style="margin:4px 0 16px 0; font-size:14px; color:#0066CC; font-weight:500;">{stock_info['Ticker']} &bull; {stock_info['Exchange']} &bull; Listed {stock_info['Listing Year']} ({stock_info['Industry']} / {stock_info['Sub-Sector']})</p>
+                <h2 style="margin:0; font-size:22px;">{stock_info['English Name']}</h2>
+                <p style="margin:2px 0 8px 0; font-size:15px; color:#6E6E73; font-weight:400;">{stock_info['Chinese Name']}</p>
+                <p style="margin:4px 0 16px 0; font-size:14px; color:#0066CC; font-weight:500;">{stock_info['Ticker']} &bull; {stock_info['Exchange']} &bull; {stock_info['Industry']} / {stock_info['Sub-Sector']}</p>
                 <div style="display: flex; gap: 40px;">
                     <div>
                         <span class="metric-label">Current Price</span><br>
@@ -530,29 +511,25 @@ with col_right:
         st.markdown("#### **Comparable Sector Peers**")
         peers = df[(df["Industry"] == stock_info["Industry"]) & (df["Ticker"] != stock_info["Ticker"])].head(3)
         if not peers.empty:
-            peer_display = peers[["Ticker", "English Name", "Exchange", "Total Return (%)", "P/E Ratio"]]
+            peer_display = peers[["Ticker", "English Name", "Total Return (%)", "P/E Ratio"]]
             st.dataframe(peer_display, use_container_width=True)
         else:
             st.info("No direct peers available in the current active filter.")
 
-# 6. Global & Exchange-Specific Top Performers Section
+# 6. Global Top Performers Section
 st.markdown("---")
-st.markdown("### **Top Performing IPOs Across Public Markets (2024-2026)**")
+st.markdown("### **Top Performing Official IPOs**")
 
-col_top1, col_top2, col_top3, col_top4 = st.columns(4)
+col_top1, col_top2 = st.columns(2)
 
 with col_top1:
-    st.markdown("#### **Overall Leaders**")
+    st.markdown("#### **Top Gainers**")
     top_overall = df.nlargest(3, "Total Return (%)")
     for _, row in top_overall.iterrows():
         st.markdown(f"**{row['Ticker']}** ({row['English Name']}) <br><span style='color:#34C759; font-weight:600;'>+{row['Total Return (%)']}%</span>", unsafe_allow_html=True)
 
-exchanges_list = df["Exchange"].unique().tolist()
-for idx, exch in enumerate(exchanges_list[:3]):
-    col = [col_top2, col_top3, col_top4][idx]
-    with col:
-        short_name = exch.split()[0]
-        st.markdown(f"#### **{short_name} Leaders**")
-        exch_top = df[df["Exchange"] == exch].nlargest(3, "Total Return (%)")
-        for _, row in exch_top.iterrows():
-            st.markdown(f"**{row['Ticker']}** ({row['English Name']}) <br><span style='color:#34C759; font-weight:600;'>+{row['Total Return (%)']}%</span>", unsafe_allow_html=True)
+with col_top2:
+    st.markdown("#### **Largest Market Cap**")
+    top_mcap = df.nlargest(3, "Market Cap (B)")
+    for _, row in top_mcap.iterrows():
+        st.markdown(f"**{row['Ticker']}** ({row['English Name']}) <br><span style='color:#0066CC; font-weight:600;'>${row['Market Cap (B)']}B</span>", unsafe_allow_html=True)
