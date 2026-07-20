@@ -42,7 +42,7 @@ def fetch_live_yfinance_batch(tickers, listing_dates):
     return_pcts = {}
     history_cache = {}
     
-    for ticker, l_date in-zip(tickers, listing_dates):
+    for ticker, l_date in zip(tickers, listing_dates):
         clean_code = ticker.strip().replace(".HK", "").zfill(5)
         yf_symbol = f"{clean_code}.HK"
         
