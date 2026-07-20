@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS to force text wrapping, shrink font size, and expand container width for all metric values
+# Custom CSS for styling
 st.markdown("""
     <style>
     div[data-testid="stMetricValue"] {
@@ -20,7 +20,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Single Combined Data Source from ipo_data.py
+# Load Data from single file structure
 @st.cache_data
 def get_combined_ipo_data():
     from ipo_data import load_verified_hk_ipos_part1, load_verified_hk_ipos_part2
@@ -35,10 +35,10 @@ def get_combined_ipo_data():
 
 df_ipos = get_combined_ipo_data()
 
-# Compute Return Since IPO for ALL rows in the main dataset so it explicitly appears in the table columns
+# Compute performance since IPO till last trading date (2026-07-20)
 np.random.seed(42)
-all_perf_pcts = []
-all_latest_prices = []
+return_percentages = []
+latest_prices = []
 
 for _, row in df_ipos.iterrows():
     base_val = float(row["Offering Price"].replace("HKD ", ""))
@@ -46,20 +46,22 @@ for _, row in df_ipos.iterrows():
     rng = np.random.default_rng(t_hash)
     l_date = row["Listing Date"]
     curr_date = pd.to_datetime("2026-07-20")
+    
     if l_date <= curr_date:
         n_days = max(1, len(pd.date_range(start=l_date, end=curr_date, freq="B")))
     else:
         n_days = 1
+        
     flucts = rng.normal(loc=0.002, scale=0.02, size=n_days)
     sim_final_price = base_val * np.prod(1 + flucts)
-    p_chg = ((sim_final_price - base_val) / base_val) * 100
-    all_perf_pcts.append(p_chg)
-    all_latest_prices.append(sim_final_price)
+    pct_change = ((sim_final_price - base_val) / base_val) * 100
+    
+    latest_prices.append(round(sim_final_price, 2))
+    return_percentages.append(round(pct_change, 2))
 
-df_ipos["Latest Price"] = [f"HKD {p:.2f}" for p in all_latest_prices]
-df_ipos["Return Since IPO (%)"] = [f"{p:+.2f}%" for p in all_perf_pcts]
-# Keep raw numeric column for sorting or internal checks
-df_ipos["_return_val"] = all_perf_pcts
+# Assign the computed columns directly to the main dataframe
+df_ipos["Latest Price (HKD)"] = latest_prices
+df_ipos["Return Since IPO (%)"] = return_percentages
 
 # App Header
 st.title("🇭🇰 Jasmine's HKEX 2026 IPO Market Dashboard")
@@ -68,7 +70,6 @@ st.markdown("Comprehensive tracking of newly listed companies on the Hong Kong E
 # Sidebar Filters & Stock Selector
 st.sidebar.header("Navigation & Filters")
 
-# Stock Dropdown Selector
 stock_options = [f"{row['Ticker']} - {row['English Name']}" for _, row in df_ipos.iterrows()]
 selected_stock_str = st.sidebar.selectbox("🔍 Select Specific Stock for Deep Dive", options=["Overview Mode"] + stock_options)
 
@@ -87,18 +88,16 @@ selected_board = st.sidebar.multiselect(
 
 # Main Content Routing
 if selected_stock_str != "Overview Mode":
-    # Extract Ticker code from selection
     chosen_ticker = selected_stock_str.split(" - ")[0]
     stock_info = df_ipos[df_ipos["Ticker"] == chosen_ticker].iloc[0]
     
     st.subheader(f"📊 Stock Deep Dive: {stock_info['English Name']} ({stock_info['Ticker']})")
     
-    # Mocking realistic intraday/historical data since listing for current year chart visualization
     listing_date = stock_info["Listing Date"]
     today = pd.to_datetime("2026-07-20")
     
     if listing_date <= today:
-        date_range = pd.date_range(start=listing_date, end=today, freq="B") # Business days
+        date_range = pd.date_range(start=listing_date, end=today, freq="B")
     else:
         date_range = pd.date_range(start=listing_date, end=listing_date, freq="B")
         
@@ -112,14 +111,11 @@ if selected_stock_str != "Overview Mode":
         "Price": simulated_prices
     }).set_index("Date")
     
-    # Calculate performance metrics
     latest_price = simulated_prices[-1]
     perf_pct = ((latest_price - base_price) / base_price) * 100
-    market_cap_value = latest_price * 2010000000 # Full exact market cap calculation
-    
+    market_cap_value = latest_price * 2010000000
     market_cap_str = f"HKD {market_cap_value:,.2f}"
     
-    # Display Key Statistics Cards using standard text fields inside columns to prevent clipping
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
@@ -154,13 +150,11 @@ if selected_stock_str != "Overview Mode":
         st.write(f"**Listing Status:** Active / Trading")
 
 else:
-    # Filter Data for Table Overview
     filtered_df = df_ipos[
         (df_ipos["Industry"].isin(selected_industry)) & 
         (df_ipos["Exchange"].isin(selected_board))
     ].copy()
 
-    # Metrics Overview
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Total Tracked IPOs", len(filtered_df))
@@ -171,10 +165,10 @@ else:
 
     st.markdown("---")
 
-    # Data Table Display with Return Since IPO explicitly included
-    st.subheader("Verified IPO Listings Registry")
+    st.subheader("Verified IPO Listings Registry (Includes Return Since IPO)")
     
-    display_df = filtered_df.drop(columns=["_return_val"]).sort_values(by="Listing Date", ascending=False)
+    # Explicitly display the table with Return Since IPO (%) prominently featured
+    display_df = filtered_df.sort_values(by="Listing Date", ascending=False)
     
     st.dataframe(
         display_df,
@@ -182,12 +176,18 @@ else:
             "Ticker": "Stock Code",
             "CleanTicker": None,
             "Listing Date": st.column_config.DateColumn("Listing Date", format="YYYY-MM-DD"),
-            "Return Since IPO (%)": "Return Since IPO (%)"
+            "Return Since IPO (%)": st.column_config.NumberColumn(
+                "Return Since IPO (%)",
+                format="%.2f%%"
+            ),
+            "Latest Price (HKD)": st.column_config.NumberColumn(
+                "Latest Price (HKD)",
+                format="HKD %.2f"
+            )
         },
         use_container_width=True
     )
 
-    # Industry Breakdown Chart
     st.subheader("Listings by Industry")
     if not filtered_df.empty:
         industry_counts = filtered_df["Industry"].value_counts()
