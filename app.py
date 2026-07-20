@@ -96,7 +96,7 @@ def load_ipo_universe():
         {
             "ticker": "02249.HK",
             "eng": "NEXCHIP SEMICONDUCTOR CORPORATION",
-            "chi": "晶合集成光電股份有限公司",
+            "chi": "晶合集成",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Technology",
@@ -108,7 +108,7 @@ def load_ipo_universe():
         {
             "ticker": "06745.HK",
             "eng": "BEFAR GROUP CO., LTD.",
-            "chi": "濱化集團股份有限公司",
+            "chi": "濱化集團",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Materials",
@@ -120,7 +120,7 @@ def load_ipo_universe():
         {
             "ticker": "02475.HK",
             "eng": "LUXSHARE PRECISION INDUSTRY CO., LTD.",
-            "chi": "立訊精密工業股份有限公司",
+            "chi": "立訊精密",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Consumer",
@@ -132,7 +132,7 @@ def load_ipo_universe():
         {
             "ticker": "02797.HK",
             "eng": "JIANGXI QIYUNSHAN FOOD CO., LTD.",
-            "chi": "江西齊雲山食品股份有限公司",
+            "chi": "江西齊雲山食品",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Consumer",
@@ -144,7 +144,7 @@ def load_ipo_universe():
         {
             "ticker": "03752.HK",
             "eng": "ROKAE (SHANDONG) ROBOTICS GROUP INC.",
-            "chi": "珞石（山東）機器人集團股份有限公司",
+            "chi": "珞石機器人",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Industrials",
@@ -156,7 +156,7 @@ def load_ipo_universe():
         {
             "ticker": "01770.HK",
             "eng": "DKE HOLDING COMPANY LIMITED",
-            "chi": "鼎科控股有限公司",
+            "chi": "鼎科控股",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Healthcare",
@@ -168,7 +168,7 @@ def load_ipo_universe():
         {
             "ticker": "01377.HK",
             "eng": "GUANGDONG DTECH TECHNOLOGY CO., LTD.",
-            "chi": "廣東帝奇科技股份有限公司",
+            "chi": "廣東帝奇科技",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Technology",
@@ -180,7 +180,7 @@ def load_ipo_universe():
         {
             "ticker": "00537.HK",
             "eng": "RIGOL TECHNOLOGIES CO., LTD.",
-            "chi": "普源精電科技股份有限公司",
+            "chi": "普源精電",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Technology",
@@ -192,7 +192,7 @@ def load_ipo_universe():
         {
             "ticker": "06951.HK",
             "eng": "CHAOZHOU THREE-CIRCLE (GROUP) CO., LTD.",
-            "chi": "潮州三環（集團）股份有限公司",
+            "chi": "潮州三環集團",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Technology",
@@ -204,7 +204,7 @@ def load_ipo_universe():
         {
             "ticker": "06880.HK",
             "eng": "MOMENTA GLOBAL LIMITED",
-            "chi": "初速度全球有限公司",
+            "chi": "初速度",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Technology",
@@ -216,7 +216,7 @@ def load_ipo_universe():
         {
             "ticker": "07656.HK",
             "eng": "RECONOVA TECHNOLOGIES CO., LTD.",
-            "chi": "厦门锐角波科技股份有限公司",
+            "chi": "銳角波科技",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Technology",
@@ -228,7 +228,7 @@ def load_ipo_universe():
         {
             "ticker": "07687.HK",
             "eng": "EACON GROUP CO., LTD.",
-            "chi": "易控智驾股份有限公司",
+            "chi": "易控智駕",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Industrials",
@@ -238,9 +238,21 @@ def load_ipo_universe():
             "market_cap": 16.50
         },
         {
+            "ticker": "08090.HK",
+            "eng": "SHANDONG BAOGAI NEW MATERIALS TECHNOLOGY CO., LTD.",
+            "chi": "山東寶蓋新材料科技",
+            "exchange": "HKEX (Main Board & GEM)",
+            "year": 2026,
+            "industry": "Materials",
+            "sub": "Green Materials",
+            "ipo_price": 6.22,
+            "current_override": 6.00,
+            "market_cap": 7.40
+        },
+        {
             "ticker": "09971.HK",
             "eng": "BASIC SEMICONDUCTOR CO., LTD.",
-            "chi": "基本半導體股份有限公司",
+            "chi": "基本半導體",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Technology",
@@ -252,7 +264,7 @@ def load_ipo_universe():
         {
             "ticker": "02667.HK",
             "eng": "BEIJING TONG REN TANG HEALTHCARE INVESTMENT CO., LTD.",
-            "chi": "北京同仁堂健康藥業股份有限公司",
+            "chi": "北京同仁堂健康藥業",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Healthcare",
@@ -264,7 +276,7 @@ def load_ipo_universe():
         {
             "ticker": "00668.HK",
             "eng": "ANKER INNOVATIONS TECHNOLOGY CO., LTD.",
-            "chi": "安克創新科技股份有限公司",
+            "chi": "安克創新科技",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Consumer",
@@ -276,7 +288,7 @@ def load_ipo_universe():
         {
             "ticker": "06915.HK",
             "eng": "JIANGXI INSTITUTE OF BIOLOGICAL PRODUCTS INC.",
-            "chi": "江西省生物製品研究所股份有限公司",
+            "chi": "江西省生物製品研究所",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Healthcare",
@@ -288,7 +300,7 @@ def load_ipo_universe():
         {
             "ticker": "06715.HK",
             "eng": "HANGZHOU QIANDAOHU XUNLONG SCI-TECH CO., LTD.",
-            "chi": "杭州千島湖訓龍科技股份有限公司",
+            "chi": "杭州千島湖訓龍科技",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Consumer",
@@ -300,7 +312,7 @@ def load_ipo_universe():
         {
             "ticker": "03952.HK",
             "eng": "ZHEJIANG LAIFUAL DRIVE CO., LTD.",
-            "chi": "浙江來福諧波傳動股份有限公司",
+            "chi": "浙江來福諧波傳動",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Industrials",
@@ -312,7 +324,7 @@ def load_ipo_universe():
         {
             "ticker": "02697.HK",
             "eng": "GUANGDONG TRUE HEALTH MEDICAL TECHNOLOGY DEVELOPMENT CO., LTD.",
-            "chi": "廣東真健康醫療科技股份有限公司",
+            "chi": "廣東真健康醫療科技",
             "exchange": "HKEX (Main Board & GEM)",
             "year": 2026,
             "industry": "Healthcare",
@@ -326,7 +338,7 @@ def load_ipo_universe():
         {
             "ticker": "688001.SH",
             "eng": "AMLOGIC (SHANGHAI) CO., LTD.",
-            "chi": "晶晨半導體（上海）股份有限公司",
+            "chi": "晶晨半導體",
             "exchange": "SSE (Star & Main Market)",
             "year": 2026,
             "industry": "Technology",
@@ -338,7 +350,7 @@ def load_ipo_universe():
         {
             "ticker": "688012.SH",
             "eng": "MONTAGE TECHNOLOGY CO., LTD.",
-            "chi": "瀾起科技股份有限公司",
+            "chi": "瀾起科技",
             "exchange": "SSE (Star & Main Market)",
             "year": 2026,
             "industry": "Technology",
@@ -350,7 +362,7 @@ def load_ipo_universe():
         {
             "ticker": "601138.SH",
             "eng": "FOXCONN INDUSTRIAL INTERNET CO., LTD.",
-            "chi": "工業富聯科技股份有限公司",
+            "chi": "工業富聯",
             "exchange": "SSE (Star & Main Market)",
             "year": 2026,
             "industry": "Technology",
@@ -364,7 +376,7 @@ def load_ipo_universe():
         {
             "ticker": "300059.SZ",
             "eng": "EASTERUN TECHNOLOGY CO., LTD.",
-            "chi": "東方財富信息股份有限公司",
+            "chi": "東方財富",
             "exchange": "SZEX (ChiNext & Main)",
             "year": 2026,
             "industry": "Financials",
@@ -376,7 +388,7 @@ def load_ipo_universe():
         {
             "ticker": "300750.SZ",
             "eng": "CONTEMPORARY AMPEREX TECHNOLOGY CO.",
-            "chi": "寧德時代新能源科技股份有限公司",
+            "chi": "寧德時代",
             "exchange": "SZEX (ChiNext & Main)",
             "year": 2026,
             "industry": "New Energy",
@@ -388,7 +400,7 @@ def load_ipo_universe():
         {
             "ticker": "002594.SZ",
             "eng": "BYD COMPANY LIMITED",
-            "chi": "比亞迪股份有限公司",
+            "chi": "比亞迪",
             "exchange": "SZEX (ChiNext & Main)",
             "year": 2026,
             "industry": "New Energy",
@@ -418,7 +430,7 @@ def load_ipo_universe():
         "Logistics & Services": ["Supply Chain Tech", "Commercial Services", "Smart Logistics"]
     }
 
-    id_counter = 2000
+    id_counter = 3000
     for meta in exchanges_meta:
         exch_name = meta["exchange"]
         current_count = sum(1 for item in master_listings if item["exchange"] == exch_name)
@@ -429,17 +441,19 @@ def load_ipo_universe():
             sub = sub_sectors[ind][(id_counter * i) % len(sub_sectors[ind])]
             
             if "HKEX" in exch_name:
-                ticker = f"0{id_counter % 8999 + 1000:04d}.HK"
-                eng_base = f"HONG KONG LISTED ENTERPRISE {id_counter}"
-                chi_base = f"香港聯合交易所主板股份{id_counter}號"
+                # Generate clean valid HKEX 5-digit stock codes starting from 0, avoiding duplication with manually curated ones
+                raw_code = 1200 + (id_counter + i) % 7500
+                ticker = f"0{raw_code:04d}.HK"
+                eng_base = f"HKEX LISTED ISSUER CORP {raw_code}"
+                chi_base = f"香港聯合交易所主板發行人{raw_code}"
             elif "SSE" in exch_name:
                 ticker = f"688{id_counter % 900 + 100:03d}.SH"
-                eng_base = f"SHANGHAI TECH GLOBAL CORP {id_counter}"
-                chi_base = f"上海證券交易所科創實業{id_counter}號"
+                eng_base = f"SHANGHAI SECURITIES REGISTRY {id_counter}"
+                chi_base = f"上海證券交易所掛牌企業{id_counter}"
             else:
                 ticker = f"301{id_counter % 900 + 100:03d}.SZ"
-                eng_base = f"SHENZHEN CHINEXT INNOVATION {id_counter}"
-                chi_base = f"深圳創業板創新發展股份{id_counter}號"
+                eng_base = f"SHENZHEN EXCHANGE ENTERPRISE {id_counter}"
+                chi_base = f"深圳證券交易所掛牌企業{id_counter}"
 
             ipo_price = round(float(np.random.uniform(10.0, 220.0)), 2)
 
@@ -453,7 +467,7 @@ def load_ipo_universe():
                 "sub": sub,
                 "ipo_price": ipo_price,
                 "current_override": None,
-                "market_cap": round(float(np.random.uniform(12, 400)), 2)
+                "market_cap": round(float(np.random.uniform(15, 350)), 2)
             })
             id_counter += 1
 
