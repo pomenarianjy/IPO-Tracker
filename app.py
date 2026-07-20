@@ -405,9 +405,21 @@ with header_col2:
 
 st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
 
-# 4. Sidebar Screening Configuration
+# 4. Sidebar Screening Configuration (All individual filter dropdowns explicitly restored and visible)
 st.sidebar.markdown("### **Filters & Controls**")
 st.sidebar.markdown('<p style="font-size:12px; color:#86868B;">Official HKEX database records.</p>', unsafe_allow_html=True)
+
+selected_exchanges = st.sidebar.multiselect(
+    "Stock Exchanges",
+    options=df["Exchange"].unique().tolist(),
+    default=df["Exchange"].unique().tolist()
+)
+
+selected_years = st.sidebar.multiselect(
+    "Listing Years",
+    options=df["Listing Year"].unique().tolist(),
+    default=df["Listing Year"].unique().tolist()
+)
 
 selected_industries = st.sidebar.multiselect(
     "All Industry Sectors",
@@ -415,9 +427,13 @@ selected_industries = st.sidebar.multiselect(
     default=df["Industry"].unique().tolist()
 )
 
-filtered_df = df[df["Industry"].isin(selected_industries)]
+filtered_df = df[
+    df["Exchange"].isin(selected_exchanges) &
+    df["Listing Year"].isin(selected_years) &
+    df["Industry"].isin(selected_industries)
+]
 
-# 5. Main Content Layout: Split Panel (Left Panel Restored)
+# 5. Main Content Layout: Split Panel
 col_left, col_right = st.columns([1.1, 1.4], gap="large")
 
 with col_left:
